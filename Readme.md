@@ -1,11 +1,25 @@
 # Atomic Data Structures
 
+
+A collection of atomic data structures meant to be used in concurrent environments
+
+
+## Installation
+
+
 Import this repository to utilize different atomic datastructure, implemented in `Go`.
 
 in your `Go` project main directory (where the `go.mod` file is located)
 ```bash
 go get github.com/sirgallo/ads
+go mod tidy
 ```
+
+make sure to run go mod tidy to install dependencies
+
+
+## Data Structures
+
 
 [LockFreeQueue](./docs/LockFreeQueue.md)
 
