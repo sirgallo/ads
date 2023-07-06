@@ -25,7 +25,7 @@ make sure to run go mod tidy to install dependencies
 
 to use:
 ```go
-import "github.com/sirgallo/ads/queue"
+import "github.com/sirgallo/ads/pkg/queue"
 
 func main() {
   // define max queue size and exponential backoff on CAS failure
@@ -50,7 +50,7 @@ func main() {
 
 to use:
 ```go
-import "github.com/sirgallo/ads/stack"
+import "github.com/sirgallo/ads/pkg/stack"
 
 func main() {
   // define max stack size and exponential backoff on CAS failure
@@ -70,11 +70,11 @@ func main() {
 }
 ```
 
-[Counter](./counter/Counter.go)
+[Counter](./pkg/counter/Counter.go)
 
 to use:
 ```go
-import "github.com/sirgallo/ads/counter"
+import "github.com/sirgallo/ads/pkg/counter"
 
 func main() {
   // intantiate the counter
