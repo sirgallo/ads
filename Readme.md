@@ -67,6 +67,7 @@ func main() {
   // pop
   val, err := lfStack.Pop()
   if err != nil { // handle error }
+}
 ```
 
 [Counter](./counter/Counter.go)
