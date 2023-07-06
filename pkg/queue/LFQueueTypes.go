@@ -4,10 +4,10 @@ import "time"
 import "unsafe"
 import "github.com/google/uuid"
 
-import "github.com/sirgallo/ads/counter"
-import "github.com/sirgallo/ads/node"
-import "github.com/sirgallo/ads/stack"
-import "github.com/sirgallo/ads/utils"
+import "github.com/sirgallo/ads/pkg/counter"
+import "github.com/sirgallo/ads/pkg/node"
+import "github.com/sirgallo/ads/pkg/stack"
+import "github.com/sirgallo/ads/pkg/utils"
 
 
 type LFQueueOpts struct {

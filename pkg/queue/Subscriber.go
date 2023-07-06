@@ -2,8 +2,8 @@ package queue
 
 import "github.com/google/uuid"
 
-import "github.com/sirgallo/ads/stack"
-import "github.com/sirgallo/ads/utils"
+import "github.com/sirgallo/ads/pkg/stack"
+import "github.com/sirgallo/ads/pkg/utils"
 
 
 func NewSubscriber(opts SubscriberOpts) *Subscriber {
