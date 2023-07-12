@@ -5,7 +5,7 @@
 
 ### CTrie
 
-A `Concurrent Trie` is a non-blocking implementation of a `Hash Array Mapped Trie (HAMT)` that utilizes atomic Compare and Swap (CAS) operations.
+A `Concurrent Trie` is a non-blocking implementation of a `Hash Array Mapped Trie (HAMT)` that utilizes atomic `Compare-and-Swap (CAS)` operations.
 
 To learn more about the `Hash Array Mapped Trie` algorithm, check out [hamt](https://github.com/sirgallo/hamt/blob/main/docs/HashArrayMappedTrie.md).
 
