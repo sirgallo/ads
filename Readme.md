@@ -1,7 +1,7 @@
 # Atomic Data Structures
 
 
-A collection of atomic data structures meant to be used in concurrent environments
+A collection of atomic data structures meant to be used in concurrent environments. These aim to be thread safe and non blocking, utilizing atomic operations like Compare-and-Swap to update the following data structures.
 
 
 ## Installation
