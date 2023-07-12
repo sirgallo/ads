@@ -47,6 +47,8 @@ func main() {
 
 to use:
 ```go
+package main
+
 import "github.com/sirgallo/ads/pkg/queue"
 import "github.com/sirgallo/ads/pkg/utils"
 
@@ -73,6 +75,8 @@ func main() {
 
 to use:
 ```go
+package main
+
 import "github.com/sirgallo/ads/pkg/stack"
 import "github.com/sirgallo/ads/pkg/utils"
 
@@ -98,6 +102,8 @@ func main() {
 
 to use:
 ```go
+package main
+
 import "github.com/sirgallo/ads/pkg/counter"
 
 func main() {
