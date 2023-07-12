@@ -8,7 +8,7 @@ import "github.com/sirgallo/ads/pkg/utils"
 func NewLFMap() *LFMap {
 	bitChunkSize := 5
 	
-	root := atomic.Value{}
+	root := &atomic.Value{}
 	rootNode := &LFMapNode{
 		BitMap: 0,
 		Children: []*LFMapNode{},
@@ -18,7 +18,7 @@ func NewLFMap() *LFMap {
 
 	return &LFMap{
 		BitChunkSize: bitChunkSize,
-		Root: &root,
+		Root: root,
 	}
 }
 
@@ -39,9 +39,11 @@ func NewInternalNode() *LFMapNode {
 }
 
 func (lfMap *LFMap) Insert(key string, value interface{}) {
-	completed := lfMap.insertRecursive(lfMap.Root, key, value, 0)
-	if ! completed {
-		lfMap.Insert(key, value)
+	for {
+		completed := lfMap.insertRecursive(lfMap.Root, key, value, 0)
+		if completed {
+			break
+		}
 	}
 }
 
@@ -74,21 +76,21 @@ func (lfMap *LFMap) insertRecursive(node *atomic.Value, key string, value interf
 				newInternalNode := NewInternalNode()
 				currNode.Children[pos] = newInternalNode
 
-				atomicINode := atomic.Value{}
+				atomicINode := &atomic.Value{}
 				atomicINode.Store(currNode.Children[pos])
 
-				completed1 := lfMap.insertRecursive(&atomicINode, childNode.Key, childNode.Value, level + 1)
+				completed1 := lfMap.insertRecursive(atomicINode, childNode.Key, childNode.Value, level + 1)
 				if ! completed1 {
 					return false
 				}
 				
-				return lfMap.insertRecursive(&atomicINode, key, value, level + 1)
+				return lfMap.insertRecursive(atomicINode, key, value, level + 1)
 			}
 		} else {
-			atomicChild := atomic.Value{}
+			atomicChild := &atomic.Value{}
 			atomicChild.Store(currNode.Children[pos])
 			
-			return lfMap.insertRecursive(&atomicChild, key, value, level + 1) 
+			return lfMap.insertRecursive(atomicChild, key, value, level + 1) 
 		}
 	}
 }
@@ -123,12 +125,12 @@ func (lfMap *LFMap) retrieveRecursive(node *atomic.Value, key string, hash uint3
 
 func (lfMap *LFMap) Delete(key string) bool {
 	hash := utils.FnvHash(key)
-	completed := lfMap.deleteRecursive(lfMap.Root, key, hash, 0)
-	if ! completed {
-		lfMap.Delete(key)
+	for {
+		completed := lfMap.deleteRecursive(lfMap.Root, key, hash, 0)
+		if completed {
+			return true
+		}
 	}
-
-	return true
 }
 
 func (lfMap *LFMap) deleteRecursive(node *atomic.Value, key string, hash uint32, level int) bool {
@@ -153,10 +155,10 @@ func (lfMap *LFMap) deleteRecursive(node *atomic.Value, key string, hash uint32,
 			
 			return false
 		} else { 
-			atomicChild := atomic.Value{}
+			atomicChild := &atomic.Value{}
 			atomicChild.Store(childNode)
 			
-			completed := lfMap.deleteRecursive(&atomicChild, key, hash, level + 1) 
+			completed := lfMap.deleteRecursive(atomicChild, key, hash, level + 1) 
 			if ! completed {
 				return false
 			}
