@@ -59,6 +59,9 @@ func ShrinkTable(orig []*LFMapNode, bitMap uint32, pos int) []*LFMapNode {
 	return newTable
 }
 
+
+// for debugging
+
 func (lfMap *LFMap) PrintChildren() {
 	lfMap.printChildrenRecursive(lfMap.Root, 0)
 }
