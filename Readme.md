@@ -30,7 +30,7 @@ import "github.com/sirgallo/ads/pkg/map"
 
 func main() {
   // initialize lock free map
-  lfMap := lfmap.NewLFMap()
+  lfMap := lfmap.NewLFMap[string]()
 
   // insert key/val pair
   lfMap.Insert("hi", "world")
@@ -47,8 +47,8 @@ func main() {
 
 to use:
 ```go
-import "github.com/sirgallo/ads/queue"
-import "github.com/sirgallo/ads/utils"
+import "github.com/sirgallo/ads/pkg/queue"
+import "github.com/sirgallo/ads/pkg/utils"
 
 func main() {
   // define max queue size and exponential backoff on CAS failure
@@ -57,7 +57,7 @@ func main() {
   qOpts := queue.LFQueueOpts{ MaxQueueSize: 10000, ExpBackoffOpts: expBackoffOpts }
 	
   // initialize queue with opts
-  q := queue.NewLFQueue(qOpts)
+  q := queue.NewLFQueue[string](qOpts)
 
   // enqueue
   q.Enqueue("hi")
@@ -74,7 +74,7 @@ func main() {
 to use:
 ```go
 import "github.com/sirgallo/ads/pkg/stack"
-import "github.com/sirgallo/ads/utils"
+import "github.com/sirgallo/ads/pkg/utils"
 
 func main() {
   // define max stack size and exponential backoff on CAS failure
@@ -83,7 +83,7 @@ func main() {
   sOpts := stack.LFStackOpts{ MaxStackSize: 10000, ExpBackoffOpts: sExpBackoffOpts }
 	
   // initialize stack with opts
-  lfStack := stack.NewLFStack(sOpts)
+  lfStack := stack.NewLFStack[string](sOpts)
 
   // push
   lfStack.Push("hi")

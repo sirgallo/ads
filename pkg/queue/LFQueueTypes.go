@@ -15,41 +15,41 @@ type LFQueueOpts struct {
 	MaxQueueSize int
 }
 
-type LFQueue struct {
+type LFQueue [T comparable] struct {
 	head unsafe.Pointer
 	tail unsafe.Pointer
-	nodePool *node.LFNodePool
+	nodePool *node.LFNodePool[T]
 	length *counter.Counter
 	maxQueueSize int
 	expBackoffOpts utils.ExpBackoffOpts
 }
 
-type QueueEntry struct {
+type QueueEntry [T comparable] struct {
   Timestamp time.Time
-	Message interface{}
+	Message T
 	ProducerId string
 }
 
-type PublisherOpts struct {
-	LFQueue *LFQueue
+type PublisherOpts [T comparable] struct {
+	LFQueue *LFQueue[QueueEntry[T]]
 }
 
-type Publisher struct {
+type Publisher [T comparable] struct {
 	publisherId uuid.UUID
-	lfQueue *LFQueue
+	lfQueue *LFQueue[QueueEntry[T]]
 }
 
-type SubscriberOpts struct {
-	LFQueue *LFQueue
-	DequeueHandler func(subscriberId uuid.UUID, dequeued interface{}) bool
+type SubscriberOpts [T comparable] struct {
+	LFQueue *LFQueue[QueueEntry[T]]
+	DequeueHandler func(subscriberId uuid.UUID, dequeued QueueEntry[T]) bool
 	StackSize int
 	TerminationSignal chan bool
 }
 
-type Subscriber struct {
+type Subscriber [T comparable] struct {
 	subscriberId uuid.UUID
-	lfQueue *LFQueue
-	lfStack *stack.LFStack
-	dequeueHandler func(subscriberId uuid.UUID, dequeued interface{}) bool
+	lfQueue *LFQueue[QueueEntry[T]]
+	lfStack *stack.LFStack[QueueEntry[T]]
+	dequeueHandler func(subscriberId uuid.UUID, dequeued QueueEntry[T]) bool
 	terminationSignal chan bool
 }

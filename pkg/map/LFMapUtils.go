@@ -6,11 +6,11 @@ import "math/bits"
 import "math"
 
 
-func (lfMap *LFMap) getSparseIndex(hash uint32, level int) int {
+func (lfMap *LFMap[T]) getSparseIndex(hash uint32, level int) int {
 	return GetIndex(hash, lfMap.BitChunkSize, level)
 }
 
-func (lfMap *LFMap) getPosition(bitMap uint32, hash uint32, level int) int {
+func (lfMap *LFMap[T]) getPosition(bitMap uint32, hash uint32, level int) int {
 	sparseIdx := GetIndex(hash, lfMap.BitChunkSize, level)
 	mask := uint32((1 << sparseIdx) - 1)
 	isolatedBits := bitMap & mask
@@ -30,17 +30,17 @@ func GetIndex(hash uint32, chunkSize int, level int) int {
 	return int(hash >> shiftSize & mask)
 }
 
-func setBit(bitmap uint32, position int) uint32 {
+func SetBit(bitmap uint32, position int) uint32 {
 	return bitmap ^ (1 <<  position)
 }
 
-func isBitSet(bitmap uint32, position int) bool {
+func IsBitSet(bitmap uint32, position int) bool {
 	return (bitmap & (1 << position)) != 0
 }
 
-func ExtendTable(orig []*LFMapNode, bitMap uint32, pos int, newNode *LFMapNode) []*LFMapNode {
+func ExtendTable[T comparable](orig []*LFMapNode[T], bitMap uint32, pos int, newNode *LFMapNode[T]) []*LFMapNode[T] {
 	tableSize := calculateHammingWeight(bitMap)
-	newTable := make([]*LFMapNode, tableSize)
+	newTable := make([]*LFMapNode[T], tableSize)
 	
 	copy(newTable[:pos], orig[:pos])
 	newTable[pos] = newNode
@@ -49,9 +49,9 @@ func ExtendTable(orig []*LFMapNode, bitMap uint32, pos int, newNode *LFMapNode) 
 	return newTable
 }
 
-func ShrinkTable(orig []*LFMapNode, bitMap uint32, pos int) []*LFMapNode {
+func ShrinkTable[T comparable](orig []*LFMapNode[T], bitMap uint32, pos int) []*LFMapNode[T] {
 	tableSize := calculateHammingWeight(bitMap)
-	newTable := make([]*LFMapNode, tableSize)
+	newTable := make([]*LFMapNode[T], tableSize)
 	
 	copy(newTable[:pos], orig[:pos])
 	copy(newTable[pos:], orig[pos + 1:])
@@ -62,12 +62,12 @@ func ShrinkTable(orig []*LFMapNode, bitMap uint32, pos int) []*LFMapNode {
 
 // for debugging
 
-func (lfMap *LFMap) PrintChildren() {
+func (lfMap *LFMap[T]) PrintChildren() {
 	lfMap.printChildrenRecursive(lfMap.Root, 0)
 }
 
-func (lfMap *LFMap) printChildrenRecursive(node *atomic.Value, level int) {
-	currNode := node.Load().(*LFMapNode)
+func (lfMap *LFMap[T]) printChildrenRecursive(node *atomic.Value, level int) {
+	currNode := node.Load().(*LFMapNode[T])
 	if currNode == nil { return }
 	for i, child := range currNode.Children {
 		if child != nil {

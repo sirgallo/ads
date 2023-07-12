@@ -3,12 +3,12 @@ package node
 import "unsafe"
 
 
-type LFNode struct {
-	Value interface{}
+type LFNode [T comparable] struct {
+	Value T
 	Next unsafe.Pointer
 	Tag uintptr
 }
 
-type LFNodePool struct {
-	Pool chan *LFNode
+type LFNodePool [T comparable] struct {
+	Pool chan *LFNode[T]
 }

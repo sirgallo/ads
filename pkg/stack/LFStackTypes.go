@@ -12,9 +12,9 @@ type LFStackOpts struct {
 	MaxStackSize int
 }
 
-type LFStack struct {
+type LFStack [T comparable] struct {
 	top unsafe.Pointer
-	nodePool *node.LFNodePool
+	nodePool *node.LFNodePool[T]
 	expBackoffOpts utils.ExpBackoffOpts
 	length *counter.Counter
 	maxStackSize int

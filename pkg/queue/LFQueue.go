@@ -10,14 +10,14 @@ import "github.com/sirgallo/ads/pkg/node"
 import "github.com/sirgallo/ads/pkg/utils"
 
 
-func NewLFQueue(opts LFQueueOpts) *LFQueue {
+func NewLFQueue[T comparable](opts LFQueueOpts) *LFQueue[T] {
 	fmt.Println("Initializing Lock Free Queue")
 	
 	qCounter, _ := counter.NewCounter(0)
-	nodePool := node.NewLFNodePool(opts.MaxQueueSize)
+	nodePool := node.NewLFNodePool[T](opts.MaxQueueSize)
 	node := unsafe.Pointer(nodePool.GetLFNode())
 	
-	return &LFQueue {
+	return &LFQueue[T] {
 		head: node,
 		tail: node,
 		nodePool: nodePool,
@@ -27,7 +27,7 @@ func NewLFQueue(opts LFQueueOpts) *LFQueue {
 	}
 }
 
-func (queue *LFQueue) Enqueue(incoming interface{}) (bool, error) {
+func (queue *LFQueue[T]) Enqueue(incoming T) (bool, error) {
 	if queue.Size() >= int64(queue.maxQueueSize) { 
 		return false, errors.New("max queue size reached, unable to enqueue") 
 	}
@@ -42,14 +42,14 @@ func (queue *LFQueue) Enqueue(incoming interface{}) (bool, error) {
 
 	for {
 		tail = atomic.LoadPointer(&queue.tail)
-		next = atomic.LoadPointer(&(*node.LFNode)(tail).Next)
-		tag = atomic.LoadUintptr(&(*node.LFNode)(tail).Tag)
+		next = atomic.LoadPointer(&(*node.LFNode[T])(tail).Next)
+		tag = atomic.LoadUintptr(&(*node.LFNode[T])(tail).Tag)
 
-		if tail == atomic.LoadPointer(&queue.tail) && tag == atomic.LoadUintptr(&(*node.LFNode)(tail).Tag) {
+		if tail == atomic.LoadPointer(&queue.tail) && tag == atomic.LoadUintptr(&(*node.LFNode[T])(tail).Tag) {
 			if next == nil {
 				newNode.Tag = tag + 1
 
-				if atomic.CompareAndSwapPointer(&(*node.LFNode)(tail).Next, nil, unsafe.Pointer(newNode)) {
+				if atomic.CompareAndSwapPointer(&(*node.LFNode[T])(tail).Next, nil, unsafe.Pointer(newNode)) {
 					atomic.CompareAndSwapPointer(&queue.tail, tail, unsafe.Pointer(newNode))
 					queue.length.Increment(1)
 					
@@ -63,30 +63,29 @@ func (queue *LFQueue) Enqueue(incoming interface{}) (bool, error) {
 	}
 }
 
-func (queue *LFQueue) Dequeue() (interface{}, error) {
+func (queue *LFQueue[T]) Dequeue() (T, error) {
 	expBackoffStrat := utils.NewExponentialBackoffStrat(queue.expBackoffOpts)
 
-	// var NilQueueEntry = QueueEntry{} 
 	var head, tail, next unsafe.Pointer
 	var tag uintptr
 
 	for {
 		head = atomic.LoadPointer(&queue.head)
 		tail = atomic.LoadPointer(&queue.tail)
-		next = atomic.LoadPointer(&(*node.LFNode)(head).Next)
-		tag = atomic.LoadUintptr(&(*node.LFNode)(head).Tag)
+		next = atomic.LoadPointer(&(*node.LFNode[T])(head).Next)
+		tag = atomic.LoadUintptr(&(*node.LFNode[T])(head).Tag)
 
-		if head == atomic.LoadPointer(&queue.head) && tag == atomic.LoadUintptr(&(*node.LFNode)(head).Tag) {
+		if head == atomic.LoadPointer(&queue.head) && tag == atomic.LoadUintptr(&(*node.LFNode[T])(head).Tag) {
 			if head == tail { 
-				if head == nil { return nil, nil }
+				if head == nil { return utils.GetZero[T](), nil }
 				atomic.CompareAndSwapPointer(&queue.tail, tail, next)
 			} else {
 				if next != nil {
-					value := (*node.LFNode)(next).Value
+					value := (*node.LFNode[T])(next).Value
 					if atomic.CompareAndSwapPointer(&queue.head, head, next) {
-						atomic.AddUintptr(&(*node.LFNode)(head).Tag, 1)
+						atomic.AddUintptr(&(*node.LFNode[T])(head).Tag, 1)
 
-						queue.nodePool.PutLFNode((*node.LFNode)(head))
+						queue.nodePool.PutLFNode((*node.LFNode[T])(head))
 						queue.length.Decrement(1)
 
 						return value, nil
@@ -96,30 +95,30 @@ func (queue *LFQueue) Dequeue() (interface{}, error) {
 		}
 
 		err := expBackoffStrat.PerformBackoff()
-		if err != nil { return nil, err }
+		if err != nil { return utils.GetZero[T](), err }
 	}
 }
 
-func (queue *LFQueue) Peek() interface{} {
+func (queue *LFQueue[T]) Peek() T {
 	head := atomic.LoadPointer(&queue.head) // head is dummy value, get value of next pointer
-	next := atomic.LoadPointer(&(*node.LFNode)(head).Next)
+	next := atomic.LoadPointer(&(*node.LFNode[T])(head).Next)
 	
-	return (*node.LFNode)(next).Value.(QueueEntry)
+	return (*node.LFNode[T])(next).Value
 }
 
-func (queue *LFQueue) Size() int64 {
+func (queue *LFQueue[T]) Size() int64 {
 	return queue.length.GetValue()
 }
 
-func (queue *LFQueue) MaxSize() int {
+func (queue *LFQueue[T]) MaxSize() int {
 	return queue.maxQueueSize
 }
 
-func (queue *LFQueue) Clear() bool {
+func (queue *LFQueue[T]) Clear() bool {
 	close(queue.nodePool.Pool)
 	return true
 }
 
-func (entry QueueEntry) String() string {
-	return fmt.Sprintf("{ timestamp: %s, message: %s, producerId: %s }", entry.Timestamp.Format("2006-01-02 15:04:05"), entry.Message, entry.ProducerId)
+func (entry QueueEntry[T]) String() string {
+	return fmt.Sprintf("{ timestamp: %s, message: %T, producerId: %s }", entry.Timestamp.Format("2006-01-02 15:04:05"), entry.Message, entry.ProducerId)
 }

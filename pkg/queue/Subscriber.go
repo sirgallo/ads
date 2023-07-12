@@ -6,15 +6,15 @@ import "github.com/sirgallo/ads/pkg/stack"
 import "github.com/sirgallo/ads/pkg/utils"
 
 
-func NewSubscriber(opts SubscriberOpts) *Subscriber {
+func NewSubscriber[T comparable](opts SubscriberOpts[T]) *Subscriber[T] {
 	subscriberId := uuid.New()
 
 	maxRetries := 10
 	sExpBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 10 }
 	sOpts := stack.LFStackOpts{ MaxStackSize: opts.StackSize, ExpBackoffOpts: sExpBackoffOpts }
-	lfStack := stack.NewLFStack(sOpts)
+	lfStack := stack.NewLFStack[QueueEntry[T]](sOpts)
 
-	return &Subscriber{
+	return &Subscriber[T] {
 		subscriberId: subscriberId,
 		lfQueue: opts.LFQueue,
 		lfStack: lfStack,
@@ -23,9 +23,7 @@ func NewSubscriber(opts SubscriberOpts) *Subscriber {
 	}
 }
 
-func (subscriber *Subscriber) Subscribe() (bool, error) {
-	var NilQueueEntry = QueueEntry{} 
-
+func (subscriber *Subscriber[T]) Subscribe() (bool, error) {
 	fillStackSignal := make(chan bool, 1)
 	processStackSignal := make(chan bool, 1)
 
@@ -50,7 +48,7 @@ func (subscriber *Subscriber) Subscribe() (bool, error) {
 							dequeued, err := subscriber.lfQueue.Dequeue() 
 							if err != nil { return false, err }
 				
-							if dequeued != NilQueueEntry {
+							if dequeued != utils.GetZero[QueueEntry[T]]() {
 								subscriber.lfStack.Push(dequeued)
 								expBackoffStrat.Reset() // successful dequeue, reset exp backoff
 							} else { expBackoffStrat.PerformBackoff() }

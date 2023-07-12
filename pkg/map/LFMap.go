@@ -5,40 +5,40 @@ import "sync/atomic"
 import "github.com/sirgallo/ads/pkg/utils"
 
 
-func NewLFMap() *LFMap {
+func NewLFMap[T comparable]() *LFMap[T] {
 	bitChunkSize := 5
 	
 	root := &atomic.Value{}
-	rootNode := &LFMapNode{
+	rootNode := &LFMapNode[T]{
 		BitMap: 0,
-		Children: []*LFMapNode{},
+		Children: []*LFMapNode[T]{},
 	}
 
 	root.Store(rootNode)
 
-	return &LFMap{
+	return &LFMap[T]{
 		BitChunkSize: bitChunkSize,
 		Root: root,
 	}
 }
 
-func NewLeafNode(key string, value interface{}) *LFMapNode {
-	return &LFMapNode{ 
+func NewLeafNode[T comparable](key string, value T) *LFMapNode[T] {
+	return &LFMapNode[T]{ 
 		Key: key, 
 		Value: value, 
 		IsLeafNode: true,
 	}
 }
 
-func NewInternalNode() *LFMapNode {
-	return &LFMapNode{
+func NewInternalNode[T comparable]() *LFMapNode[T] {
+	return &LFMapNode[T]{
 		IsLeafNode: false, 
 		BitMap: 0,
-		Children: []*LFMapNode{},
+		Children: []*LFMapNode[T]{},
 	}
 }
 
-func (lfMap *LFMap) Insert(key string, value interface{}) bool {
+func (lfMap *LFMap[T]) Insert(key string, value T) bool {
 	for {
 		completed := lfMap.insertRecursive(lfMap.Root, key, value, 0)
 		if completed {
@@ -47,18 +47,18 @@ func (lfMap *LFMap) Insert(key string, value interface{}) bool {
 	}
 }
 
-func (lfMap *LFMap) insertRecursive(node *atomic.Value, key string, value interface{}, level int) bool {
+func (lfMap *LFMap[T]) insertRecursive(node *atomic.Value, key string, value T, level int) bool {
 	hash := utils.FnvHash(key)
 	index := lfMap.getSparseIndex(hash, level)
-	currNode := node.Load().(*LFMapNode)
+	currNode := node.Load().(*LFMapNode[T])
 
-	if ! isBitSet(currNode.BitMap, index) {
+	if ! IsBitSet(currNode.BitMap, index) {
 		newLeaf := NewLeafNode(key, value)
-		currNode.BitMap = setBit(currNode.BitMap, index)
+		currNode.BitMap = SetBit(currNode.BitMap, index)
 		pos := lfMap.getPosition(currNode.BitMap, hash, level)
 		currNode.Children = ExtendTable(currNode.Children, currNode.BitMap, pos, newLeaf)
 		
-		if node.CompareAndSwap(node.Load().(*LFMapNode), currNode) {
+		if node.CompareAndSwap(node.Load().(*LFMapNode[T]), currNode) {
 			return true
 		} else { return false }
 	} else {
@@ -69,11 +69,11 @@ func (lfMap *LFMap) insertRecursive(node *atomic.Value, key string, value interf
 			if key == childNode.Key {
 				currNode.Children[pos].Value = value
 
-				if node.CompareAndSwap(node.Load().(*LFMapNode), currNode) {
+				if node.CompareAndSwap(node.Load().(*LFMapNode[T]), currNode) {
 					return true
 				} else { return false }
 			} else {
-				newInternalNode := NewInternalNode()
+				newInternalNode := NewInternalNode[T]()
 				currNode.Children[pos] = newInternalNode
 
 				atomicINode := &atomic.Value{}
@@ -95,25 +95,25 @@ func (lfMap *LFMap) insertRecursive(node *atomic.Value, key string, value interf
 	}
 }
 
-func (lfMap *LFMap) Retrieve(key string) interface{} {
+func (lfMap *LFMap[T]) Retrieve(key string) T {
 	hash := utils.FnvHash(key)
 	return lfMap.retrieveRecursive(lfMap.Root, key, hash, 0)
 }
 
-func (lfMap *LFMap) retrieveRecursive(node *atomic.Value, key string, hash uint32, level int) interface{} {
+func (lfMap *LFMap[T]) retrieveRecursive(node *atomic.Value, key string, hash uint32, level int) T {
 	index := lfMap.getSparseIndex(hash, level)
-	currNode := node.Load().(*LFMapNode)
+	currNode := node.Load().(*LFMapNode[T])
 	
-	if ! isBitSet(currNode.BitMap, index) { 
-		return nil 
+	if ! IsBitSet(currNode.BitMap, index) { 
+		return utils.GetZero[T]() 
 	} else {
 		pos := lfMap.getPosition(currNode.BitMap, hash, level)
 		childNode := currNode.Children[pos]
 
 		if childNode.IsLeafNode && key == childNode.Key {
-			if childNode.Value == (node.Load().(*LFMapNode)).Children[pos].Value {
+			if childNode.Value == (node.Load().(*LFMapNode[T])).Children[pos].Value {
 				return childNode.Value
-			} else { return nil }
+			} else { return utils.GetZero[T]() }
  		} else { 
 			atomicChild := &atomic.Value{}
 			atomicChild.Store(childNode)
@@ -123,7 +123,7 @@ func (lfMap *LFMap) retrieveRecursive(node *atomic.Value, key string, hash uint3
 	}
 }
 
-func (lfMap *LFMap) Delete(key string) bool {
+func (lfMap *LFMap[T]) Delete(key string) bool {
 	hash := utils.FnvHash(key)
 	for {
 		completed := lfMap.deleteRecursive(lfMap.Root, key, hash, 0)
@@ -133,11 +133,11 @@ func (lfMap *LFMap) Delete(key string) bool {
 	}
 }
 
-func (lfMap *LFMap) deleteRecursive(node *atomic.Value, key string, hash uint32, level int) bool {
+func (lfMap *LFMap[T]) deleteRecursive(node *atomic.Value, key string, hash uint32, level int) bool {
 	index := lfMap.getSparseIndex(hash, level)
-	currNode := node.Load().(*LFMapNode)
+	currNode := node.Load().(*LFMapNode[T])
 
-	if ! isBitSet(currNode.BitMap, index) { 
+	if ! IsBitSet(currNode.BitMap, index) { 
 		return true 
 	} else {
 		pos := lfMap.getPosition(currNode.BitMap, hash, level)
@@ -145,10 +145,10 @@ func (lfMap *LFMap) deleteRecursive(node *atomic.Value, key string, hash uint32,
 		
 		if childNode.IsLeafNode {
 			if key == childNode.Key {
-				currNode.BitMap = setBit(currNode.BitMap, index)
+				currNode.BitMap = SetBit(currNode.BitMap, index)
 				currNode.Children = ShrinkTable(currNode.Children, currNode.BitMap, pos)
 				
-				if node.CompareAndSwap(node.Load().(*LFMapNode), currNode) {
+				if node.CompareAndSwap(node.Load().(*LFMapNode[T]), currNode) {
 					return true
 				} else { return false }
 			}
@@ -165,11 +165,11 @@ func (lfMap *LFMap) deleteRecursive(node *atomic.Value, key string, hash uint32,
 
 			popCount := calculateHammingWeight(currNode.BitMap)
 			if popCount == 0 { // if empty internal node, remove from the mapped array
-				currNode.BitMap = setBit(currNode.BitMap, index)
+				currNode.BitMap = SetBit(currNode.BitMap, index)
 				currNode.Children = ShrinkTable(currNode.Children, currNode.BitMap, pos)
 			} 
 
-			if node.CompareAndSwap(node.Load().(*LFMapNode), currNode) {
+			if node.CompareAndSwap(node.Load().(*LFMapNode[T]), currNode) {
 				return true
 			} else { return false }
 		}
