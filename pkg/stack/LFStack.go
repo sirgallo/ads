@@ -1,14 +1,12 @@
 package stack
 
-import (
-	"errors"
-	"sync/atomic"
-	"unsafe"
+import "errors"
+import "sync/atomic"
+import "unsafe"
 
-	"github.com/sirgallo/ads/pkg/counter"
-	"github.com/sirgallo/ads/pkg/node"
-	"github.com/sirgallo/ads/pkg/utils"
-)
+import "github.com/sirgallo/ads/pkg/counter"
+import "github.com/sirgallo/ads/pkg/node"
+import "github.com/sirgallo/ads/pkg/utils"
 
 
 func NewLFStack[T comparable](opts LFStackOpts) *LFStack[T] {
