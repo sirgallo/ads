@@ -79,8 +79,8 @@ func (lfMap *LFMap) insertRecursive(node *atomic.Value, key string, value interf
 				atomicINode := &atomic.Value{}
 				atomicINode.Store(currNode.Children[pos])
 
-				completed1 := lfMap.insertRecursive(atomicINode, childNode.Key, childNode.Value, level + 1)
-				if ! completed1 {
+				completed := lfMap.insertRecursive(atomicINode, childNode.Key, childNode.Value, level + 1)
+				if ! completed {
 					return false
 				}
 				
