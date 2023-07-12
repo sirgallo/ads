@@ -2,15 +2,6 @@ package lfmap
 
 import "sync/atomic"
 
-// import "github.com/sirgallo/ads/pkg/utils"
-
-
-/*
-type LFMapOpts struct {
-	ExpBackoffOpts utils.ExpBackoffOpts
-	MaxPoolSize int
-}
-*/
 
 type LFMapNode struct {
 	Key string

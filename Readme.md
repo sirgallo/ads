@@ -20,6 +20,28 @@ make sure to run go mod tidy to install dependencies
 
 ## Data Structures
 
+[LockFreeMap](./docs/LockFreeMap.md)
+
+to use:
+```go
+package main
+
+import "github.com/sirgallo/ads/pkg/map"
+
+func main() {
+  // initialize lock free map
+  lfMap := lfmap.NewLFMap()
+
+  // insert key/val pair
+  lfMap.Insert("hi", "world")
+
+  // retrieve value for key
+  val := lfMap.Retrieve("hi")
+
+  // delete key/val pair
+  lfMap.Delete("hi")
+}
+```
 
 [LockFreeQueue](./docs/LockFreeQueue.md)
 
@@ -34,7 +56,7 @@ func main() {
   expBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 1 }
   qOpts := queue.LFQueueOpts{ MaxQueueSize: 10000, ExpBackoffOpts: expBackoffOpts }
 	
-  // intantiate queue with opts
+  // initialize queue with opts
   q := queue.NewLFQueue(qOpts)
 
   // enqueue
@@ -60,7 +82,7 @@ func main() {
   sExpBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 10 }
   sOpts := stack.LFStackOpts{ MaxStackSize: 10000, ExpBackoffOpts: sExpBackoffOpts }
 	
-  // intantiate stack with opts
+  // initialize stack with opts
   lfStack := stack.NewLFStack(sOpts)
 
   // push

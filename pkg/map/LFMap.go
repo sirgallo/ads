@@ -38,11 +38,11 @@ func NewInternalNode() *LFMapNode {
 	}
 }
 
-func (lfMap *LFMap) Insert(key string, value interface{}) {
+func (lfMap *LFMap) Insert(key string, value interface{}) bool {
 	for {
 		completed := lfMap.insertRecursive(lfMap.Root, key, value, 0)
 		if completed {
-			break
+			return true
 		}
 	}
 }
