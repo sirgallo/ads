@@ -115,10 +115,10 @@ func (lfMap *LFMap) retrieveRecursive(node *atomic.Value, key string, hash uint3
 				return childNode.Value
 			} else { return nil }
  		} else { 
-			atomicChild := atomic.Value{}
+			atomicChild := &atomic.Value{}
 			atomicChild.Store(childNode)
 
-			return lfMap.retrieveRecursive(&atomicChild, key, hash, level + 1) 
+			return lfMap.retrieveRecursive(atomicChild, key, hash, level + 1) 
 		}
 	}
 }
