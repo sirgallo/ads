@@ -1,12 +1,14 @@
 package stack
 
-import "errors"
-import "sync/atomic"
-import "unsafe"
+import (
+	"errors"
+	"sync/atomic"
+	"unsafe"
 
-import "github.com/sirgallo/ads/pkg/counter"
-import "github.com/sirgallo/ads/pkg/node"
-import "github.com/sirgallo/ads/pkg/utils"
+	"github.com/sirgallo/ads/pkg/counter"
+	"github.com/sirgallo/ads/pkg/node"
+	"github.com/sirgallo/ads/pkg/utils"
+)
 
 
 func NewLFStack[T comparable](opts LFStackOpts) *LFStack[T] {
@@ -65,9 +67,9 @@ func (stack *LFStack[T]) Pop() (T, error) {
 	}
 }
 
-func (stack *LFStack[T]) Peek() interface{} {
+func (stack *LFStack[T]) Peek() T {
 	top := atomic.LoadPointer(&stack.top)
-	if top == nil { return nil }
+	if top == nil { return utils.GetZero[T]() }
 	
 	return (*node.LFNode[T])(top).Value
 }

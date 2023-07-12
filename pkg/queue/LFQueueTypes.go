@@ -12,7 +12,7 @@ import "github.com/sirgallo/ads/pkg/utils"
 
 type LFQueueOpts struct {
 	ExpBackoffOpts utils.ExpBackoffOpts
-	MaxQueueSize int
+	MaxPoolSize int
 }
 
 type LFQueue [T comparable] struct {
@@ -20,7 +20,7 @@ type LFQueue [T comparable] struct {
 	tail unsafe.Pointer
 	nodePool *node.LFNodePool[T]
 	length *counter.Counter
-	maxQueueSize int
+	maxPoolSize int
 	expBackoffOpts utils.ExpBackoffOpts
 }
 

@@ -23,6 +23,17 @@ func (counter *Counter) Decrement(step int64) (int64, error) {
 	return decremented, nil
 }
 
+func (counter *Counter) Reset() (int64, error) {
+	if counter.value > 0 {
+		decremented := atomic.AddInt64(&counter.value, -counter.value)
+		if decremented > 0 || decremented < 0 { return counter.value,  errors.New("decremented incorrectly")}
+		
+		return decremented, nil
+	} else {
+		return counter.value, nil
+	}
+}
+
 func (counter *Counter) GetValue() int64 {
 	return atomic.LoadInt64(&counter.value)
 }

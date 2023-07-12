@@ -43,6 +43,12 @@ func main() {
 }
 ```
 
+to test:
+```bash
+go test -v ./pkg/map/tests
+```
+
+
 [LockFreeQueue](./docs/LockFreeQueue.md)
 
 to use:
@@ -68,6 +74,11 @@ func main() {
   val, err := q.Dequeue()
   if err != nil { // handle error }
 }
+```
+
+to test:
+```bash
+go test -v ./pkg/queue/tests
 ```
 
 
@@ -98,6 +109,12 @@ func main() {
 }
 ```
 
+to test:
+```bash
+go test -v ./pkg/queue/tests
+```
+
+
 [Counter](./pkg/counter/Counter.go)
 
 to use:
@@ -119,4 +136,36 @@ func main() {
   // subtract from the counter
   counter.Decrement(1)
 }
+```
+
+to test:
+```bash
+go test -v ./pkg/counter/tests
+```
+
+
+[NodePool](./pkg/node/LFNodePool.go)
+
+to use:
+```go
+package main
+
+import "github.com/sirgallo/ads/pkg/node"
+
+func main() {
+  poolsize := 10000
+  // intantiate the pool
+  np := node.NewNodePool(poolsize)
+
+  // get a node from the node pool
+  newNode := np.GetLFNode()
+
+  // put node back in pool
+  np.PutLFNode(newNode)
+}
+```
+
+to test:
+```bash
+go test -v ./pkg/counter/tests
 ```

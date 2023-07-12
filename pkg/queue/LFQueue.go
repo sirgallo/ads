@@ -14,7 +14,7 @@ func NewLFQueue[T comparable](opts LFQueueOpts) *LFQueue[T] {
 	fmt.Println("Initializing Lock Free Queue")
 	
 	qCounter, _ := counter.NewCounter(0)
-	nodePool := node.NewLFNodePool[T](opts.MaxQueueSize)
+	nodePool := node.NewLFNodePool[T](opts.MaxPoolSize)
 	node := unsafe.Pointer(nodePool.GetLFNode())
 	
 	return &LFQueue[T] {
@@ -22,13 +22,13 @@ func NewLFQueue[T comparable](opts LFQueueOpts) *LFQueue[T] {
 		tail: node,
 		nodePool: nodePool,
 		length: qCounter,
-		maxQueueSize: opts.MaxQueueSize,
+		maxPoolSize: opts.MaxPoolSize,
 		expBackoffOpts: opts.ExpBackoffOpts,
 	}
 }
 
 func (queue *LFQueue[T]) Enqueue(incoming T) (bool, error) {
-	if queue.Size() >= int64(queue.maxQueueSize) { 
+	if queue.Size() >= int64(queue.maxPoolSize) { 
 		return false, errors.New("max queue size reached, unable to enqueue") 
 	}
 
@@ -111,12 +111,21 @@ func (queue *LFQueue[T]) Size() int64 {
 }
 
 func (queue *LFQueue[T]) MaxSize() int {
-	return queue.maxQueueSize
+	return queue.maxPoolSize
 }
 
 func (queue *LFQueue[T]) Clear() bool {
-	close(queue.nodePool.Pool)
-	return true
+	_, err := queue.length.Reset()
+	if err != nil {
+		return false
+	}
+	
+	if atomic.CompareAndSwapPointer(&queue.head, unsafe.Pointer(&queue.head), nil) {
+		close(queue.nodePool.Pool)
+		return true
+	}
+	
+	return false
 }
 
 func (entry QueueEntry[T]) String() string {

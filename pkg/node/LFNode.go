@@ -2,6 +2,8 @@ package node
 
 import "unsafe"
 
+import "github.com/sirgallo/ads/pkg/counter"
+
 
 type LFNode [T comparable] struct {
 	Value T
@@ -10,5 +12,6 @@ type LFNode [T comparable] struct {
 }
 
 type LFNodePool [T comparable] struct {
+	PoolSize counter.Counter
 	Pool chan *LFNode[T]
 }
