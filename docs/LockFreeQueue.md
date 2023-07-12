@@ -68,8 +68,8 @@ func ExpBackoffStrat(depth int, timeout int) (int, int) {
 
 ## Sources
 
-[LockFreeQueue](../src/queue/LFQueue.go)
+[LockFreeQueue](../pkg/queue/LFQueue.go)
 
-[Publisher](../src/queue/Publisher.go)
+[Publisher](../pkg/queue/Publisher.go)
 
-[Subscriber](../src/queue/Subscriber.go)
+[Subscriber](../pkg/queue/Subscriber.go)

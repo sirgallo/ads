@@ -55,4 +55,4 @@ func ExpBackoffStrat(depth int, timeout int) (int, int) {
 
 ## Source
 
-[LockFreeStack](../src/stack/LFStack.go)
+[LockFreeStack](../pkg/stack/LFStack.go)
