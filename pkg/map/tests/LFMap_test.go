@@ -1,11 +1,15 @@
 package lfmaptests
 
 import "testing"
+import "sync/atomic"
 
 import "github.com/sirgallo/ads/pkg/map"
 
 
+
 func TestMapOperations(t *testing.T) {
+	// opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
+	// lfMap := lfmap.NewLFMap[string](opts)
 	lfMap := lfmap.NewLFMap[string]()
 
 	lfMap.Insert("hello", "world")
@@ -17,7 +21,7 @@ func TestMapOperations(t *testing.T) {
 	lfMap.Insert("final", "the!")
 	lfMap.Insert("6", "wow!")
 	lfMap.Insert("asdfasdf", "add 10")
-	lfMap.Insert("asdfasdf", "123123")
+	lfMap.Insert("asdfasdf", "123123") // note same key, will update value
 	lfMap.Insert("asd", "queue!")
 	lfMap.Insert("fasdf", "interesting")
 	lfMap.Insert("yup", "random again!")
@@ -27,7 +31,8 @@ func TestMapOperations(t *testing.T) {
 	lfMap.Insert("fasdfasdf", "info!")
 	lfMap.Insert("woah", "done")
 
-	rootBitMap := lfMap.Root.Load().(*lfmap.LFMapNode[string]).BitMap
+	// rootBitMap := lfMap.Root.Load().(*lfmap.LFMapNode[string]).BitMap
+	rootBitMap := (*lfmap.LFMapNode[string])(atomic.LoadPointer(&lfMap.Root)).BitMap
 	t.Logf("bitmap of root after inserts: %032b\n", rootBitMap)
 	t.Logf("bitmap of root after inserts: %d\n", rootBitMap)
 
@@ -77,7 +82,7 @@ func TestMapOperations(t *testing.T) {
 	lfMap.Delete("new")
 	lfMap.Delete("6")
 
-	rootBitMapAfterDelete := lfMap.Root.Load().(*lfmap.LFMapNode[string]).BitMap
+	rootBitMapAfterDelete := (*lfmap.LFMapNode[string])(atomic.LoadPointer(&lfMap.Root)).BitMap
 	t.Logf("bitmap of root after deletes: %032b\n", rootBitMapAfterDelete)
 	t.Logf("bitmap of root after deletes: %d\n", rootBitMapAfterDelete)
 
@@ -89,4 +94,12 @@ func TestMapOperations(t *testing.T) {
 	if expectedRootBitmapAfterDelete != rootBitMapAfterDelete {
 		t.Errorf("actual bitmap does not match expected bitmap: actual(%032b), expected(%032b)\n", rootBitMapAfterDelete, expectedRootBitmapAfterDelete)
 	}
+
+	
+	// nodePoolSize := lfMap.NodePool.PoolSize.GetValue()
+	// expectedPoolSize := 6
+
+	// if expectedPoolSize != int(nodePoolSize) {
+	// 	t.Logf("node pool actual size does not match expected pool size: actual(%d), expected(%d)", nodePoolSize, expectedPoolSize)
+	// }
 }

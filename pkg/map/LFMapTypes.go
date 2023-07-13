@@ -1,7 +1,14 @@
 package lfmap
 
-import "sync/atomic"
+// import "sync/atomic"
+import "unsafe"
 
+import "github.com/sirgallo/ads/pkg/counter"
+
+
+type LFMapOpts struct {
+	PoolSize int
+}
 
 type LFMapNode [T comparable] struct {
 	Key string
@@ -12,11 +19,12 @@ type LFMapNode [T comparable] struct {
 }
 
 type LFMapNodePool [T comparable] struct {
+	PoolSize counter.Counter
 	Pool chan *LFMapNode[T]
 }
 
 type LFMap [T comparable] struct {
-	Root *atomic.Value
+	Root unsafe.Pointer
 	BitChunkSize int
-	TotalChildren int
+	NodePool *LFMapNodePool[T]
 }

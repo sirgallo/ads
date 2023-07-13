@@ -4,6 +4,7 @@ import "sync/atomic"
 import "fmt"
 import "math/bits"
 import "math"
+import "unsafe"
 
 
 func (lfMap *LFMap[T]) getSparseIndex(hash uint32, level int) int {
@@ -63,19 +64,22 @@ func ShrinkTable[T comparable](orig []*LFMapNode[T], bitMap uint32, pos int) []*
 // for debugging
 
 func (lfMap *LFMap[T]) PrintChildren() {
-	lfMap.printChildrenRecursive(lfMap.Root, 0)
+	lfMap.printChildrenRecursive(&lfMap.Root, 0)
 }
 
-func (lfMap *LFMap[T]) printChildrenRecursive(node *atomic.Value, level int) {
-	currNode := node.Load().(*LFMapNode[T])
+func (lfMap *LFMap[T]) printChildrenRecursive(node *unsafe.Pointer, level int) {
+	// currNode := node.Load().(*LFMapNode[T])
+	currNode := (*LFMapNode[T])(atomic.LoadPointer(node))
 	if currNode == nil { return }
+	// fmt.Println("currNode:", currNode)
 	for i, child := range currNode.Children {
 		if child != nil {
 			fmt.Printf("Level: %d, Index: %d, Key: %s, Value: %v\n", level, i, child.Key, child.Value)
 			
-			atomicChild := atomic.Value{}
-			atomicChild.Store(child)
-			lfMap.printChildrenRecursive(&atomicChild, level+1)
+			// atomicChild := atomic.Value{}
+			// atomicChild.Store(child)
+			childPtr := unsafe.Pointer(child)
+			lfMap.printChildrenRecursive(&childPtr, level+1)
 		}
 	}
 }

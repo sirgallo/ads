@@ -1,6 +1,7 @@
 package lfmap
 
 import "sync/atomic"
+import "unsafe"
 
 import "github.com/sirgallo/ads/pkg/utils"
 
@@ -8,17 +9,14 @@ import "github.com/sirgallo/ads/pkg/utils"
 func NewLFMap[T comparable]() *LFMap[T] {
 	bitChunkSize := 5
 	
-	root := &atomic.Value{}
 	rootNode := &LFMapNode[T]{
 		BitMap: 0,
 		Children: []*LFMapNode[T]{},
 	}
 
-	root.Store(rootNode)
-
 	return &LFMap[T]{
 		BitChunkSize: bitChunkSize,
-		Root: root,
+		Root: unsafe.Pointer(rootNode),
 	}
 }
 
@@ -38,71 +36,88 @@ func NewInternalNode[T comparable]() *LFMapNode[T] {
 	}
 }
 
+func CopyNode[T comparable](node *LFMapNode[T]) *LFMapNode[T] {
+	nodeCopy := &LFMapNode[T]{
+		Key: node.Key,
+		Value: node.Value,
+		IsLeafNode: node.IsLeafNode,
+		BitMap: node.BitMap,
+		Children: make([]*LFMapNode[T], len(node.Children)),
+	}
+
+	copy(nodeCopy.Children, node.Children)
+
+	return nodeCopy
+}
+
 func (lfMap *LFMap[T]) Insert(key string, value T) bool {
 	for {
-		completed := lfMap.insertRecursive(lfMap.Root, key, value, 0)
-		if completed {
-			return true
-		}
+		completed := lfMap.insertRecursive(&lfMap.Root, key, value, 0)
+		if completed { return true }
 	}
 }
 
-func (lfMap *LFMap[T]) insertRecursive(node *atomic.Value, key string, value T, level int) bool {
+func (lfMap *LFMap[T]) insertRecursive(node *unsafe.Pointer, key string, value T, level int) bool {
 	hash := utils.FnvHash(key)
 	index := lfMap.getSparseIndex(hash, level)
-	currNode := node.Load().(*LFMapNode[T])
+	
+	currNode := (*LFMapNode[T])(atomic.LoadPointer(node))
+	nodeCopy := CopyNode[T](currNode)
 
-	if ! IsBitSet(currNode.BitMap, index) {
+	if ! IsBitSet(nodeCopy.BitMap, index) {
 		newLeaf := NewLeafNode(key, value)
-		currNode.BitMap = SetBit(currNode.BitMap, index)
-		pos := lfMap.getPosition(currNode.BitMap, hash, level)
-		currNode.Children = ExtendTable(currNode.Children, currNode.BitMap, pos, newLeaf)
+		nodeCopy.BitMap = SetBit(nodeCopy.BitMap, index)
+		pos := lfMap.getPosition(nodeCopy.BitMap, hash, level)
+		nodeCopy.Children = ExtendTable(nodeCopy.Children, nodeCopy.BitMap, pos, newLeaf)
 		
-		if node.CompareAndSwap(node.Load().(*LFMapNode[T]), currNode) {
+		if atomic.CompareAndSwapPointer(node, unsafe.Pointer(currNode), unsafe.Pointer(nodeCopy)) {
 			return true
 		} else { return false }
 	} else {
-		pos := lfMap.getPosition(currNode.BitMap, hash, level)
-		childNode := currNode.Children[pos]
+		pos := lfMap.getPosition(nodeCopy.BitMap, hash, level)
+		childNode := nodeCopy.Children[pos]
 
 		if childNode.IsLeafNode {
 			if key == childNode.Key {
-				currNode.Children[pos].Value = value
+				nodeCopy.Children[pos].Value = value
 
-				if node.CompareAndSwap(node.Load().(*LFMapNode[T]), currNode) {
+				if atomic.CompareAndSwapPointer(node, unsafe.Pointer(currNode), unsafe.Pointer(nodeCopy)) {
 					return true
 				} else { return false }
 			} else {
-				newInternalNode := NewInternalNode[T]()
-				currNode.Children[pos] = newInternalNode
-
-				atomicINode := &atomic.Value{}
-				atomicINode.Store(currNode.Children[pos])
-
-				completed := lfMap.insertRecursive(atomicINode, childNode.Key, childNode.Value, level + 1)
-				if ! completed {
-					return false
-				}
+				newINode := NewInternalNode[T]()
+				ncPtr := unsafe.Pointer(newINode)
 				
-				return lfMap.insertRecursive(atomicINode, key, value, level + 1)
+				lfMap.insertRecursive(&ncPtr, childNode.Key, childNode.Value, level + 1)
+				lfMap.insertRecursive(&ncPtr, key, value, level + 1)
+
+				nodeCopy.Children[pos] = (*LFMapNode[T])(atomic.LoadPointer(&ncPtr))
+
+				if atomic.CompareAndSwapPointer(node, unsafe.Pointer(currNode), unsafe.Pointer(nodeCopy)) {
+					return true
+				} else { return false }
 			}
-		} else {
-			atomicChild := &atomic.Value{}
-			atomicChild.Store(currNode.Children[pos])
+		} else {			
+			childPtr := unsafe.Pointer(nodeCopy.Children[pos])
+			lfMap.insertRecursive(&childPtr, key, value, level + 1) 
+
+			nodeCopy.Children[pos] = (*LFMapNode[T])(atomic.LoadPointer(&childPtr))
 			
-			return lfMap.insertRecursive(atomicChild, key, value, level + 1) 
+			if atomic.CompareAndSwapPointer(node, unsafe.Pointer(currNode), unsafe.Pointer(nodeCopy)) {
+				return true
+			} else { return false }
 		}
 	}
 }
 
 func (lfMap *LFMap[T]) Retrieve(key string) T {
 	hash := utils.FnvHash(key)
-	return lfMap.retrieveRecursive(lfMap.Root, key, hash, 0)
+	return lfMap.retrieveRecursive(&lfMap.Root, key, hash, 0)
 }
 
-func (lfMap *LFMap[T]) retrieveRecursive(node *atomic.Value, key string, hash uint32, level int) T {
+func (lfMap *LFMap[T]) retrieveRecursive(node *unsafe.Pointer, key string, hash uint32, level int) T {
 	index := lfMap.getSparseIndex(hash, level)
-	currNode := node.Load().(*LFMapNode[T])
+	currNode := (*LFMapNode[T])(atomic.LoadPointer(node))
 	
 	if ! IsBitSet(currNode.BitMap, index) { 
 		return utils.GetZero[T]() 
@@ -111,14 +126,12 @@ func (lfMap *LFMap[T]) retrieveRecursive(node *atomic.Value, key string, hash ui
 		childNode := currNode.Children[pos]
 
 		if childNode.IsLeafNode && key == childNode.Key {
-			if childNode.Value == (node.Load().(*LFMapNode[T])).Children[pos].Value {
+			if childNode.Value == (*LFMapNode[T])(atomic.LoadPointer(node)).Children[pos].Value {
 				return childNode.Value
 			} else { return utils.GetZero[T]() }
  		} else { 
-			atomicChild := &atomic.Value{}
-			atomicChild.Store(childNode)
-
-			return lfMap.retrieveRecursive(atomicChild, key, hash, level + 1) 
+			childPtr := unsafe.Pointer(currNode.Children[pos])
+			return lfMap.retrieveRecursive(&childPtr, key, hash, level + 1) 
 		}
 	}
 }
@@ -126,50 +139,45 @@ func (lfMap *LFMap[T]) retrieveRecursive(node *atomic.Value, key string, hash ui
 func (lfMap *LFMap[T]) Delete(key string) bool {
 	hash := utils.FnvHash(key)
 	for {
-		completed := lfMap.deleteRecursive(lfMap.Root, key, hash, 0)
-		if completed {
-			return true
-		}
+		completed := lfMap.deleteRecursive(&lfMap.Root, key, hash, 0)
+		if completed { return true }
 	}
 }
 
-func (lfMap *LFMap[T]) deleteRecursive(node *atomic.Value, key string, hash uint32, level int) bool {
+func (lfMap *LFMap[T]) deleteRecursive(node *unsafe.Pointer, key string, hash uint32, level int) bool {
 	index := lfMap.getSparseIndex(hash, level)
-	currNode := node.Load().(*LFMapNode[T])
+	currNode := (*LFMapNode[T])(atomic.LoadPointer(node))
+	nodeCopy := CopyNode[T](currNode)
 
-	if ! IsBitSet(currNode.BitMap, index) { 
+	if ! IsBitSet(nodeCopy.BitMap, index) { 
 		return true 
 	} else {
-		pos := lfMap.getPosition(currNode.BitMap, hash, level)
-		childNode := currNode.Children[pos]
+		pos := lfMap.getPosition(nodeCopy.BitMap, hash, level)
+		childNode := nodeCopy.Children[pos]
 		
 		if childNode.IsLeafNode {
 			if key == childNode.Key {
-				currNode.BitMap = SetBit(currNode.BitMap, index)
-				currNode.Children = ShrinkTable(currNode.Children, currNode.BitMap, pos)
+				nodeCopy.BitMap = SetBit(nodeCopy.BitMap, index)
+				nodeCopy.Children = ShrinkTable(nodeCopy.Children, nodeCopy.BitMap, pos)
 				
-				if node.CompareAndSwap(node.Load().(*LFMapNode[T]), currNode) {
+				if atomic.CompareAndSwapPointer(node, unsafe.Pointer(currNode), unsafe.Pointer(nodeCopy)) {
 					return true
 				} else { return false }
 			}
 			
 			return false
 		} else { 
-			atomicChild := &atomic.Value{}
-			atomicChild.Store(childNode)
+			childPtr := unsafe.Pointer(nodeCopy.Children[pos])
 			
-			completed := lfMap.deleteRecursive(atomicChild, key, hash, level + 1) 
-			if ! completed {
-				return false
-			}
+			lfMap.deleteRecursive(&childPtr, key, hash, level + 1)
 
-			popCount := calculateHammingWeight(currNode.BitMap)
+			popCount := calculateHammingWeight(nodeCopy.BitMap)
 			if popCount == 0 { // if empty internal node, remove from the mapped array
-				currNode.BitMap = SetBit(currNode.BitMap, index)
-				currNode.Children = ShrinkTable(currNode.Children, currNode.BitMap, pos)
+				nodeCopy.BitMap = SetBit(nodeCopy.BitMap, index)
+				nodeCopy.Children = ShrinkTable(nodeCopy.Children, nodeCopy.BitMap, pos)
 			} 
 
-			if node.CompareAndSwap(node.Load().(*LFMapNode[T]), currNode) {
+			if atomic.CompareAndSwapPointer(node, unsafe.Pointer(currNode), unsafe.Pointer(nodeCopy)) {
 				return true
 			} else { return false }
 		}

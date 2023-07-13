@@ -1,5 +1,7 @@
 package lfmaptests
 
+import "crypto/rand"
+import "encoding/base64"
 import "sync"
 import "testing"
 
@@ -10,15 +12,15 @@ type KeyVal struct {
 	Key string
 	Value string
 }
+
+
 func TestMapConcurrentOperations(t *testing.T) {
 	lfMap := lfmap.NewLFMap[string]()
 
-	keyValPairs := []KeyVal{
-		{ Key: "hello", Value: "world" },
-		{ Key: "new", Value: "wow!" },
-		{ Key: "again", Value: "test!" },
-		{ Key: "asdf", Value: "hello" },
-		{ Key: "key", Value: "Saturday!" },
+	keyValPairs := make([]KeyVal, 10000)
+	for idx := range keyValPairs {
+		randomString, _ := GenerateRandomStringCrypto(32)
+		keyValPairs[idx] = KeyVal{ Key: randomString, Value: randomString }
 	}
 
 	var insertWG sync.WaitGroup
@@ -33,6 +35,8 @@ func TestMapConcurrentOperations(t *testing.T) {
 	}
 
 	insertWG.Wait()
+
+	lfMap.PrintChildren()
 
 	var retrieveWG sync.WaitGroup
 
@@ -50,4 +54,16 @@ func TestMapConcurrentOperations(t *testing.T) {
 	}
 
 	retrieveWG.Wait()
+}
+
+func GenerateRandomStringCrypto(length int) (string, error) {
+	randomBytes := make([]byte, length)
+
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+
+	randomString := base64.RawURLEncoding.EncodeToString(randomBytes)
+	return randomString[:length], nil
 }
