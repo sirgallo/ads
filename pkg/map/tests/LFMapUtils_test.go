@@ -6,7 +6,9 @@ import "fmt"
 import "github.com/sirgallo/ads/pkg/map"
 
 
-func TestGetIndex(t *testing.T) {
+//=================================== 32 bit
+
+func TestGetIndex32(t *testing.T) {
 	chunkSize := 5
 	seed := uint32(1)
 
@@ -90,8 +92,69 @@ level 5 = 00100 = 4
 */
 
 
-func TestSetBitmap(t *testing.T) {
+func TestSetBitmap32(t *testing.T) {
 	bitmap := uint32(0)
+	index1 := 1
+
+	bitmap = lfmap.SetBit(bitmap, index1)
+	fmt.Printf("current bitmap: %032b\n", bitmap)
+
+	isBitSet1 := lfmap.IsBitSet(bitmap, index1)
+	if ! isBitSet1 {
+		t.Error("bit at index 1 is not set")
+	}
+
+	index5 := 5
+
+	bitmap = lfmap.SetBit(bitmap, index5)
+	fmt.Printf("current bitmap: %032b\n", bitmap)
+	
+	isBitSet5 := lfmap.IsBitSet(bitmap, index5)
+	if ! isBitSet5 {
+		t.Error("bit at index 5 is not set")
+	}
+}
+
+
+//=================================== 64 bit
+
+func TestGetIndex64(t *testing.T) {
+	chunkSize := 6
+	seed := uint64(1)
+
+	key1 := "hello"
+	hash1 := lfmap.Murmur64(key1, seed)
+
+	fmt.Printf("hash 1: %032b\n:", hash1)
+
+	expectedValues1 := []int{46, 54, 30, 20, 12, 48, 48, 2, 20, 40}
+
+	for idx, val := range expectedValues1 {
+		index := lfmap.GetIndex(hash1, chunkSize, idx)
+		t.Logf("index: %d, expected: %d", index, val)
+		if index != val {
+			t.Error("index produced does not match expected value")
+		}
+	}
+
+	key2 := "new"
+	hash2 := lfmap.Murmur64(key2, seed)
+
+	fmt.Printf("hash 2: %032b\n:", hash2)
+
+	expectedValues2 := []int{34, 34, 32, 16, 36, 37, 11, 19, 62, 63}
+
+	for idx, val := range expectedValues2 {
+		index := lfmap.GetIndex(hash2, chunkSize, idx)
+		t.Logf("index: %d, expected: %d", index, val)
+		if index != val {
+			t.Error("index produced does not match expected value")
+		}
+	}
+}
+
+func TestSetBitmap64(t *testing.T) {
+	bitmap := uint64(0)
 	index1 := 1
 
 	bitmap = lfmap.SetBit(bitmap, index1)

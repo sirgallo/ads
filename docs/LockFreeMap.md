@@ -9,6 +9,18 @@ A `Concurrent Trie` is a non-blocking implementation of a `Hash Array Mapped Tri
 
 To learn more about the `Hash Array Mapped Trie` algorithm, check out [hamt](https://github.com/sirgallo/hamt/blob/main/docs/HashArrayMappedTrie.md).
 
+Both the `32 bit` and `64 bit` variants have been implemented, with instantiation of the map being as such:
+
+```go
+// 32 bit
+opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
+lfMap := lfmap.NewLFMap[T, uint32](opts)
+
+// 64 bit
+opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
+lfMap := lfmap.NewLFMap[T, uint64](opts)
+```
+
 
 ## Design
 
@@ -27,34 +39,50 @@ This Ctrie has a hybrid approach to cleaning up nodes, where it utilizes both `G
 
 ### Hash Exhaustion
 
-Since the 32 bit hash only has 6 chunks of 5 bits, the Ctrie is capped at 6 levels (or around 1 billion key val pairs), which is not optimal for a trie data strucutre. To circumvent this, we can re-seed our hash after every 6 levels, using [Murmur32](Murmur32.md) as our hash function. To achieve this, we utilize the following functions:
+Since the 32 bit hash only has 6 chunks of 5 bits, the Ctrie is capped at 6 levels (or around 1 billion key val pairs), which is not optimal for a trie data strucutre. To circumvent this, we can re-seed our hash after every 6 levels (or 10), using [Murmur](Murmur.md) as our hash function. To achieve this, we utilize the following functions.
+
+The 64 bit hash has also been implemented, with 10 chunks of 6 bits. 
 
 ```go
-func (lfMap *LFMap[T]) CalculateHashForCurrentLevel(key string, level int) uint32 {
-	currChunk := level / lfMap.TotalLevels
-	seed := uint32(currChunk + 1)
-	return Murmur32(key, seed)
+func (lfMap *LFMap[T, V]) CalculateHashForCurrentLevel(key string, level int) V {
+	currChunk := level / lfMap.HashChunks
+
+	var v V 
+	switch any(v).(type) {
+		case uint64:
+			seed := uint64(currChunk + 1)
+			return (V)(Murmur64(key, seed))
+		default:
+			seed := uint32(currChunk + 1)
+			return (V)(Murmur32(key, seed))
+	}
 }
 ```
 
 ```go
-func GetIndexForLevel(hash uint32, chunkSize int, level int, totalLevels int) int {
-	updatedLevel := level % totalLevels
+func GetIndexForLevel[V uint32 | uint64](hash V, chunkSize int, level int, hashChunks int) int {
+	updatedLevel := level % hashChunks
 	return GetIndex(hash, chunkSize, updatedLevel)
 }
 
-func GetIndex(hash uint32, chunkSize int, level int) int {
+func GetIndex[V uint32 | uint64](hash V, chunkSize int, level int) int {
 	slots := int(math.Pow(float64(2), float64(chunkSize)))
-	mask := uint32(slots - 1)
 	shiftSize := slots - (chunkSize * (level + 1))
 
-	return int(hash >> shiftSize & mask)
+	switch any(hash).(type) {
+		case uint64:
+			mask := uint64(slots - 1)
+			return int((uint64)(hash) >> shiftSize & mask)
+		default:
+			mask := uint32(slots - 1)
+			return int((uint32)(hash) >> shiftSize & mask)
+	}
 }
 ```
 
-this ensures we take steps of 6 levels, and at the start of the next 6 levels, re-seed the hash and start from the beginning of the new hash value for the key. Now we are no longer limited to just 6 levels. 
+this ensures we take steps of 6 levels (or 10 for `64 bit`), and at the start of the next 6 levels (or 10), re-seed the hash and start from the beginning of the new hash value for the key. Now we are no longer limited to just 6 (or 10) levels. 
 
-The seed value is just the `uint32` representation of the current chunk of levels + 1.
+The seed value is just the `uint32` or `uint64` representation of the current chunk of levels + 1.
 
 
 ## Sources

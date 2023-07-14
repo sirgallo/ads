@@ -4,32 +4,32 @@ import "github.com/sirgallo/ads/pkg/counter"
 import "github.com/sirgallo/ads/pkg/utils"
 
 
-func NewLFMapNodePool[T comparable](poolSize int) *LFMapNodePool[T] {
+func NewLFMapNodePool[T comparable, V uint32 | uint64](poolSize int) *LFMapNodePool[T, V] {
 	intertnalCounter, _ := counter.NewCounter(0)
 
-	return &LFMapNodePool[T]{ 
+	return &LFMapNodePool[T, V]{ 
 		PoolSize: *intertnalCounter,
-		Pool: make(chan *LFMapNode[T], poolSize),
+		Pool: make(chan *LFMapNode[T, V], poolSize),
 	}
 }
 
-func (np *LFMapNodePool[T]) GetLFMapNode() *LFMapNode[T] {
+func (np *LFMapNodePool[T, V]) GetLFMapNode() *LFMapNode[T, V] {
 	select {
 		case node := <- np.Pool:
 			np.PoolSize.Decrement(1)
 			return node
 		default:
-			return &LFMapNode[T]{}
+			return &LFMapNode[T, V]{}
 	}
 }
 
-func (np *LFMapNodePool[T]) PutLFMapNode(node *LFMapNode[T]) {
+func (np *LFMapNodePool[T, V]) PutLFMapNode(node *LFMapNode[T, V]) {
 	// reset node
 	node.Key = utils.GetZero[string]()
 	node.Value = utils.GetZero[T]()
 	node.IsLeafNode = false
 	node.BitMap = 0
-	node.Children = []*LFMapNode[T]{}
+	node.Children = []*LFMapNode[T, V]{}
 
 	select {
 		case np.Pool <- node:

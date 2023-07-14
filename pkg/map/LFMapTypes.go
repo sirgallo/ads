@@ -9,28 +9,23 @@ type LFMapOpts struct {
 	PoolSize int
 }
 
-type LFMapNode [T comparable] struct {
+type LFMapNode [T comparable, V uint32 | uint64] struct {
 	Key string
 	Value T
 	IsLeafNode bool
-	BitMap uint32
-	Children []*LFMapNode[T]
+	BitMap V
+	Children []*LFMapNode[T, V]
 }
 
-type LFMapNodePool [T comparable] struct {
+type LFMapNodePool [T comparable, V uint32 | uint64] struct {
 	PoolSize counter.Counter
-	Pool chan *LFMapNode[T]
+	Pool chan *LFMapNode[T, V]
 }
 
-type LFMap [T comparable] struct {
+type LFMap [T comparable, V uint32 | uint64] struct {
 	BitChunkSize int
-	TotalLevels int
-	NodePool *LFMapNodePool[T]
+	HashChunks int
+	Is64Bit bool
+	NodePool *LFMapNodePool[T, V]
 	Root unsafe.Pointer
-}
-
-type KeyHashState struct {
-	Key string
-	Hash uint32
-	Level int
 }

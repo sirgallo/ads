@@ -7,52 +7,78 @@ import "math"
 import "unsafe"
 
 
-func (lfMap *LFMap[T]) CalculateHashForCurrentLevel(key string, level int) uint32 {
-	currChunk := level / lfMap.TotalLevels
-	seed := uint32(currChunk + 1)
-	return Murmur32(key, seed)
+func (lfMap *LFMap[T, V]) CalculateHashForCurrentLevel(key string, level int) V {
+	currChunk := level / lfMap.HashChunks
+
+	var v V 
+	switch any(v).(type) {
+		case uint64:
+			seed := uint64(currChunk + 1)
+			return (V)(Murmur64(key, seed))
+		default:
+			seed := uint32(currChunk + 1)
+			return (V)(Murmur32(key, seed))
+	}
 }
 
-func (lfMap *LFMap[T]) getSparseIndex(hash uint32, level int) int {
-	return GetIndexForLevel(hash, lfMap.BitChunkSize, level, lfMap.TotalLevels)
+func (lfMap *LFMap[T, V]) getSparseIndex(hash V, level int) int {
+	return GetIndexForLevel(hash, lfMap.BitChunkSize, level, lfMap.HashChunks)
 }
 
-func (lfMap *LFMap[T]) getPosition(bitMap uint32, hash uint32, level int) int {
-	sparseIdx := GetIndexForLevel(hash, lfMap.BitChunkSize, level, lfMap.TotalLevels)
-	mask := uint32((1 << sparseIdx) - 1)
-	isolatedBits := bitMap & mask
+func (lfMap *LFMap[T, V]) getPosition(bitMap V, hash V, level int) int {
+	sparseIdx := GetIndexForLevel(hash, lfMap.BitChunkSize, level, lfMap.HashChunks)
 	
-	return calculateHammingWeight(isolatedBits)
+	switch any(bitMap).(type) {
+		case uint64:
+			mask := uint64((1 << sparseIdx) - 1)
+			isolatedBits := (uint64)(bitMap) & mask
+			return calculateHammingWeight(isolatedBits)
+		default:
+			mask := uint32((1 << sparseIdx) - 1)
+			isolatedBits := (uint32)(bitMap) & mask
+			return calculateHammingWeight(isolatedBits)
+	}
 }
 
-func GetIndexForLevel(hash uint32, chunkSize int, level int, totalLevels int) int {
-	updatedLevel := level % totalLevels
+func GetIndexForLevel[V uint32 | uint64](hash V, chunkSize int, level int, hashChunks int) int {
+	updatedLevel := level % hashChunks
 	return GetIndex(hash, chunkSize, updatedLevel)
 }
 
-func GetIndex(hash uint32, chunkSize int, level int) int {
+func GetIndex[V uint32 | uint64](hash V, chunkSize int, level int) int {
 	slots := int(math.Pow(float64(2), float64(chunkSize)))
-	mask := uint32(slots - 1)
 	shiftSize := slots - (chunkSize * (level + 1))
 
-	return int(hash >> shiftSize & mask)
+	switch any(hash).(type) {
+		case uint64:
+			mask := uint64(slots - 1)
+			return int((uint64)(hash) >> shiftSize & mask)
+		default:
+			mask := uint32(slots - 1)
+			return int((uint32)(hash) >> shiftSize & mask)
+	}
 }
 
-func calculateHammingWeight(bitmap uint32) int {
-	return bits.OnesCount32(bitmap)
+func calculateHammingWeight[V uint32 | uint64](bitmap V) int {
+	switch any(bitmap).(type) {
+		case uint64:
+			return bits.OnesCount64((uint64)(bitmap))
+		default:
+			return bits.OnesCount32((uint32)(bitmap))
+	}
 }
 
-func SetBit(bitmap uint32, position int) uint32 {
+func SetBit[V uint32 | uint64](bitmap V, position int) V {
 	return bitmap ^ (1 <<  position)
 }
 
-func IsBitSet(bitmap uint32, position int) bool {
+func IsBitSet[V uint32 | uint64](bitmap V, position int) bool {
 	return (bitmap & (1 << position)) != 0
 }
 
-func ExtendTable[T comparable](orig []*LFMapNode[T], bitMap uint32, pos int, newNode *LFMapNode[T]) []*LFMapNode[T] {
+func ExtendTable[T comparable, V uint32 | uint64](orig []*LFMapNode[T, V], bitMap V, pos int, newNode *LFMapNode[T, V]) []*LFMapNode[T, V] {
 	tableSize := calculateHammingWeight(bitMap)
-	newTable := make([]*LFMapNode[T], tableSize)
+	newTable := make([]*LFMapNode[T, V], tableSize)
 	
 	copy(newTable[:pos], orig[:pos])
 	newTable[pos] = newNode
@@ -61,9 +87,9 @@ func ExtendTable[T comparable](orig []*LFMapNode[T], bitMap uint32, pos int, new
 	return newTable
 }
 
-func ShrinkTable[T comparable](orig []*LFMapNode[T], bitMap uint32, pos int) []*LFMapNode[T] {
+func ShrinkTable[T comparable, V uint32 | uint64](orig []*LFMapNode[T, V], bitMap V, pos int) []*LFMapNode[T, V] {
 	tableSize := calculateHammingWeight(bitMap)
-	newTable := make([]*LFMapNode[T], tableSize)
+	newTable := make([]*LFMapNode[T, V], tableSize)
 	
 	copy(newTable[:pos], orig[:pos])
 	copy(newTable[pos:], orig[pos + 1:])
@@ -74,19 +100,20 @@ func ShrinkTable[T comparable](orig []*LFMapNode[T], bitMap uint32, pos int) []*
 
 // for debugging
 
-func (lfMap *LFMap[T]) PrintChildren() {
+func (lfMap *LFMap[T, V]) PrintChildren() {
 	lfMap.printChildrenRecursive(&lfMap.Root, 0)
 }
 
-func (lfMap *LFMap[T]) printChildrenRecursive(node *unsafe.Pointer, level int) {
-	currNode := (*LFMapNode[T])(atomic.LoadPointer(node))
+func (lfMap *LFMap[T, V]) printChildrenRecursive(node *unsafe.Pointer, level int) {
+	currNode := (*LFMapNode[T, V])(atomic.LoadPointer(node))
 	if currNode == nil { return }
-	for i, child := range currNode.Children {
+
+	for idx, child := range currNode.Children {
 		if child != nil {
-			fmt.Printf("Level: %d, Index: %d, Key: %s, Value: %v\n", level, i, child.Key, child.Value)
+			fmt.Printf("Level: %d, Index: %d, Key: %s, Value: %v\n", level, idx, child.Key, child.Value)
 			
 			childPtr := unsafe.Pointer(child)
-			lfMap.printChildrenRecursive(&childPtr, level+1)
+			lfMap.printChildrenRecursive(&childPtr, level + 1)
 		}
 	}
 }

@@ -26,8 +26,14 @@ import "github.com/sirgallo/ads/pkg/map"
 
 func main() {
   // initialize lock free map
+
+  // for 32 bit hash and bitmap
   opts := lfmap.LFMapOpts{ PoolSize: 10000 }
-  lfMap := lfmap.NewLFMap[string](opts)
+  lfMap := lfmap.NewLFMap[string, uint32](opts)
+
+  // for 64 bit hash and bitmap
+  opts := lfmap.LFMapOpts{ PoolSize: 10000 }
+  lfMap := lfmap.NewLFMap[string, uint64](opts)
 
   // insert key/val pair
   lfMap.Insert("hi", "world")
