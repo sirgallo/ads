@@ -144,6 +144,7 @@ func (lfMap *LFMap[T]) Delete(key string) bool {
 func (lfMap *LFMap[T]) deleteRecursive(node *unsafe.Pointer, key string, level int) bool {
 	hash := lfMap.CalculateHashForCurrentLevel(key, level)
 	index := lfMap.getSparseIndex(hash, level)
+	
 	currNode := (*LFMapNode[T])(atomic.LoadPointer(node))
 	nodeCopy := lfMap.CopyNode(currNode)
 

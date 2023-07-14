@@ -7,7 +7,7 @@ A collection of atomic data structures meant to be used in concurrent environmen
 ## Installation
 
 
-Import this repository to utilize different atomic datastructure, implemented in `Go`.
+Import this repository to utilize different atomic datastructures, implemented in `Go`.
 
 in your `Go` project main directory (where the `go.mod` file is located)
 ```bash

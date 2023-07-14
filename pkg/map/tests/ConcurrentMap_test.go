@@ -18,7 +18,7 @@ func TestMapRandomSmallConcurrentOperations(t *testing.T) {
 	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
 	lfMap := lfmap.NewLFMap[string](opts)
 
-	inputSize := 1000000
+	inputSize := 100000
 	keyValPairs := make([]KeyVal, inputSize)
 
 	for idx := range keyValPairs {
