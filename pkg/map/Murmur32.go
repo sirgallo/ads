@@ -7,7 +7,7 @@ const constant1 = 0x85ebca6b
 const constant2 = 0xc2b2ae35
 const constant3 = 0xe6546b64
 const constant4 = 0x1b873593
-const	constant5 = 0x5c4bcea9
+const constant5 = 0x5c4bcea9
 
 
 func Murmur32(data string, seed uint32) uint32 {
