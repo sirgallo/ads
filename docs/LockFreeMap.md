@@ -22,7 +22,7 @@ This CTrie implements full path copying. As an operation traverses down the path
 
 ### Object Pool
 
-This Ctrie has a hybrid approach to cleaning up nodes, where it utilizes both `Go's` garbage collection as well as an Object Pool. When copies of nodes are created, the compare and swap operation will recycle the failed node's leaf nodes. So, if the current node is replaced by the new copy, and the current node is a leaf node, it is recycled. Otherwise, the failed replacement of the new copy is recycled. On inserts, if there are available objects in the pool, a new node can be pulled from the pool. This ensures that memory is not being allocated/deallocated all the time, and should have an overall positive effect on performance of the trie.
+This Ctrie has a hybrid approach to cleaning up nodes, where it utilizes both `Go's` garbage collection as well as an Object Pool. When copies of nodes are created, the compare and swap operation will recycle the failed node if it is a leaf nodes So, if the current node is replaced by the new copy, and the current node is a leaf node, it is recycled. Otherwise, the failed replacement of the new copy is recycled. On inserts, if there are available objects in the pool, a new node can be pulled from the pool. This ensures that memory is not being allocated/deallocated all the time, and should have an overall positive effect on performance of the trie. Internal nodes are destroyed by the garbage collection.
 
 
 ### Hash Exhaustion
