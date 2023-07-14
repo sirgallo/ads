@@ -16,7 +16,8 @@ func Murmur32(data string, seed uint32) uint32 {
 	
 	length := uint32(len(dataAsBytes))
 	total4ByteChunks := len(dataAsBytes) / 4
-	for idx, _ := range make([]int, total4ByteChunks) {
+	
+	for idx := range make([]int, total4ByteChunks) {
 		startIdxOfChunk := idx * 4 
 		endIdxOfChunk := (idx + 1) * 4
 		chunk := binary.LittleEndian.Uint32(dataAsBytes[startIdxOfChunk:endIdxOfChunk])
