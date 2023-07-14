@@ -7,20 +7,27 @@ import "math"
 import "unsafe"
 
 
+func (lfMap *LFMap[T]) CalculateHashForCurrentLevel(key string, level int) uint32 {
+	currChunk := level / lfMap.TotalLevels
+	seed := uint32(currChunk + 1)
+	return Murmur32(key, seed)
+}
+
 func (lfMap *LFMap[T]) getSparseIndex(hash uint32, level int) int {
-	return GetIndex(hash, lfMap.BitChunkSize, level)
+	return GetIndexForLevel(hash, lfMap.BitChunkSize, level, lfMap.TotalLevels)
 }
 
 func (lfMap *LFMap[T]) getPosition(bitMap uint32, hash uint32, level int) int {
-	sparseIdx := GetIndex(hash, lfMap.BitChunkSize, level)
+	sparseIdx := GetIndexForLevel(hash, lfMap.BitChunkSize, level, lfMap.TotalLevels)
 	mask := uint32((1 << sparseIdx) - 1)
 	isolatedBits := bitMap & mask
 	
 	return calculateHammingWeight(isolatedBits)
 }
 
-func calculateHammingWeight(bitmap uint32) int {
-	return bits.OnesCount32(bitmap)
+func GetIndexForLevel(hash uint32, chunkSize int, level int, totalLevels int) int {
+	updatedLevel := level % totalLevels
+	return GetIndex(hash, chunkSize, updatedLevel)
 }
 
 func GetIndex(hash uint32, chunkSize int, level int) int {
@@ -29,6 +36,10 @@ func GetIndex(hash uint32, chunkSize int, level int) int {
 	shiftSize := slots - (chunkSize * (level + 1))
 
 	return int(hash >> shiftSize & mask)
+}
+
+func calculateHammingWeight(bitmap uint32) int {
+	return bits.OnesCount32(bitmap)
 }
 
 func SetBit(bitmap uint32, position int) uint32 {
@@ -59,6 +70,7 @@ func ShrinkTable[T comparable](orig []*LFMapNode[T], bitMap uint32, pos int) []*
 
 	return newTable
 }
+
 
 // for debugging
 

@@ -8,6 +8,7 @@ import "github.com/sirgallo/ads/pkg/utils"
 
 func NewLFMap[T comparable](opts LFMapOpts) *LFMap[T] {
 	bitChunkSize := 5
+	totalLevels := 6
 	
 	nodePool := NewLFMapNodePool[T](opts.PoolSize)
 	rootNode := nodePool.GetLFMapNode()
@@ -18,6 +19,7 @@ func NewLFMap[T comparable](opts LFMapOpts) *LFMap[T] {
 
 	return &LFMap[T]{
 		BitChunkSize: bitChunkSize,
+		TotalLevels: totalLevels,
 		Root: unsafe.Pointer(rootNode),
 		NodePool: nodePool,
 	}
@@ -65,7 +67,7 @@ func (lfMap *LFMap[T]) Insert(key string, value T) bool {
 }
 
 func (lfMap *LFMap[T]) insertRecursive(node *unsafe.Pointer, key string, value T, level int) bool {
-	hash := utils.FnvHash(key)
+	hash := lfMap.CalculateHashForCurrentLevel(key, level)
 	index := lfMap.getSparseIndex(hash, level)
 	
 	currNode := (*LFMapNode[T])(atomic.LoadPointer(node))
@@ -107,11 +109,11 @@ func (lfMap *LFMap[T]) insertRecursive(node *unsafe.Pointer, key string, value T
 }
 
 func (lfMap *LFMap[T]) Retrieve(key string) T {
-	hash := utils.FnvHash(key)
-	return lfMap.retrieveRecursive(&lfMap.Root, key, hash, 0)
+	return lfMap.retrieveRecursive(&lfMap.Root, key, 0)
 }
 
-func (lfMap *LFMap[T]) retrieveRecursive(node *unsafe.Pointer, key string, hash uint32, level int) T {
+func (lfMap *LFMap[T]) retrieveRecursive(node *unsafe.Pointer, key string, level int) T {
+	hash := lfMap.CalculateHashForCurrentLevel(key, level)
 	index := lfMap.getSparseIndex(hash, level)
 	currNode := (*LFMapNode[T])(atomic.LoadPointer(node))
 	
@@ -127,20 +129,20 @@ func (lfMap *LFMap[T]) retrieveRecursive(node *unsafe.Pointer, key string, hash 
 			} else { return utils.GetZero[T]() }
  		} else { 
 			childPtr := unsafe.Pointer(currNode.Children[pos])
-			return lfMap.retrieveRecursive(&childPtr, key, hash, level + 1) 
+			return lfMap.retrieveRecursive(&childPtr, key, level + 1) 
 		}
 	}
 }
 
 func (lfMap *LFMap[T]) Delete(key string) bool {
-	hash := utils.FnvHash(key)
 	for {
-		completed := lfMap.deleteRecursive(&lfMap.Root, key, hash, 0)
+		completed := lfMap.deleteRecursive(&lfMap.Root, key, 0)
 		if completed { return true }
 	}
 }
 
-func (lfMap *LFMap[T]) deleteRecursive(node *unsafe.Pointer, key string, hash uint32, level int) bool {
+func (lfMap *LFMap[T]) deleteRecursive(node *unsafe.Pointer, key string, level int) bool {
+	hash := lfMap.CalculateHashForCurrentLevel(key, level)
 	index := lfMap.getSparseIndex(hash, level)
 	currNode := (*LFMapNode[T])(atomic.LoadPointer(node))
 	nodeCopy := lfMap.CopyNode(currNode)
@@ -162,7 +164,7 @@ func (lfMap *LFMap[T]) deleteRecursive(node *unsafe.Pointer, key string, hash ui
 			return false
 		} else { 
 			childPtr := unsafe.Pointer(nodeCopy.Children[pos])
-			lfMap.deleteRecursive(&childPtr, key, hash, level + 1)
+			lfMap.deleteRecursive(&childPtr, key, level + 1)
 
 			popCount := calculateHammingWeight(nodeCopy.BitMap)
 			if popCount == 0 { // if empty internal node, remove from the mapped array

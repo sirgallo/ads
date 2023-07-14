@@ -9,6 +9,7 @@ const constant3 = 0xe6546b64
 const constant4 = 0x1b873593
 const	constant5 = 0x5c4bcea9
 
+
 func Murmur32(data string, seed uint32) uint32 {
 	dataAsBytes := []byte(data)
 	hash := seed
@@ -20,10 +21,10 @@ func Murmur32(data string, seed uint32) uint32 {
 		endIdxOfChunk := (idx + 1) * 4
 		chunk := binary.LittleEndian.Uint32(dataAsBytes[startIdxOfChunk:endIdxOfChunk])
 
-		hash = rotateRight(hash, chunk)
+		rotateRight(&hash, chunk)
 	}
 
-	handleRemainingBytes(hash, dataAsBytes)
+	handleRemainingBytes(&hash, dataAsBytes)
 
 	hash ^= length
 	hash ^= hash >> 16
@@ -35,19 +36,17 @@ func Murmur32(data string, seed uint32) uint32 {
 	return hash
 }
 
-func rotateRight(hash uint32, chunk uint32) uint32 {
+func rotateRight(hash *uint32, chunk uint32) {
 	chunk *= constant1
 	chunk = (chunk << 15) | (chunk >> 17) // Rotate right by 15
 	chunk *= constant2
 
-	hash ^= chunk
-	hash = (hash << 13) | (hash >> 19) // Rotate right by 13
-	hash = hash * 5 + constant3
-
-	return hash
+	*hash ^= chunk
+	*hash = (*hash << 13) | (*hash >> 19) // Rotate right by 13
+	*hash = *hash * 5 + constant3
 }
 
-func handleRemainingBytes(hash uint32, dataAsBytes []byte) uint32 {
+func handleRemainingBytes(hash *uint32, dataAsBytes []byte) {
 	remaining := dataAsBytes[len(dataAsBytes)-len(dataAsBytes) % 4:]
 	
 	if len(remaining) > 0 {
@@ -65,9 +64,7 @@ func handleRemainingBytes(hash uint32, dataAsBytes []byte) uint32 {
 				chunk *= constant1
 				chunk = (chunk << 15) | (chunk >> 17) // Rotate right by 15
 				chunk *= constant2
-				hash ^= chunk
+				*hash ^= chunk
 			}
 	}
-
-	return hash
 }

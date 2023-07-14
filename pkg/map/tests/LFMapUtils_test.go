@@ -4,18 +4,18 @@ import "testing"
 import "fmt"
 
 import "github.com/sirgallo/ads/pkg/map"
-import "github.com/sirgallo/ads/pkg/utils"
 
 
 func TestGetIndex(t *testing.T) {
 	chunkSize := 5
+	seed := uint32(1)
 
 	key1 := "hello"
-	hash1 := utils.FnvHash(key1)
+	hash1 := lfmap.Murmur32(key1, seed)
 
 	fmt.Printf("hash 1: %032b\n:", hash1)
 
-	expectedValues1 := []int{9, 30, 15, 18, 25, 10}
+	expectedValues1 := []int{20, 11, 2, 20, 21, 23}
 
 	for idx, val := range expectedValues1 {
 		index := lfmap.GetIndex(hash1, chunkSize, idx)
@@ -26,11 +26,11 @@ func TestGetIndex(t *testing.T) {
 	}
 
 	key2 := "new"
-	hash2 := utils.FnvHash(key2)
+	hash2 := lfmap.Murmur32(key2, seed)
 
 	fmt.Printf("hash 2: %032b\n:", hash2)
 
-	expectedValues2 := []int{5, 2, 12, 25, 12, 4}
+	expectedValues2 := []int{16, 12, 18, 25, 29, 22}
 
 	for idx, val := range expectedValues2 {
 		index := lfmap.GetIndex(hash2, chunkSize, idx)
@@ -42,6 +42,9 @@ func TestGetIndex(t *testing.T) {
 }
 
 /*
+** DEPRECATED IN FAVOR OF MURMUR32**
+** STILL GOOD FOR REF **
+
           0     1     2     3     4     5    extra
 hello = 01001 11110 01111 10010 11001 01010 11 
 ignore last bit

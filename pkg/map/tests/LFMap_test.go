@@ -6,7 +6,6 @@ import "sync/atomic"
 import "github.com/sirgallo/ads/pkg/map"
 
 
-
 func TestMapOperations(t *testing.T) {
 	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
 	lfMap := lfmap.NewLFMap[string](opts)
@@ -37,7 +36,8 @@ func TestMapOperations(t *testing.T) {
 	t.Logf("lfMap after inserts")
 	lfMap.PrintChildren()
 
-	expectedBitMap := uint32(1119911534)
+	expectedBitMap := uint32(542198999)
+	t.Logf("actual root bitmap: %d, expected root bitmap: %d", rootBitMap, expectedBitMap)
 	t.Logf("actual root bitmap: %032b, expected root bitmap: %032b\n", rootBitMap, expectedBitMap)
 	if expectedBitMap != rootBitMap {
 		t.Errorf("actual bitmap does not match expected bitmap: actual(%032b), expected(%032b)\n", rootBitMap, expectedBitMap)
@@ -87,7 +87,7 @@ func TestMapOperations(t *testing.T) {
 	t.Log("hamt after deletes")
 	lfMap.PrintChildren()
 
-	expectedRootBitmapAfterDelete := uint32(1119909902)
+	expectedRootBitmapAfterDelete := uint32(536956102)
 	t.Log("actual bitmap:", rootBitMapAfterDelete, "expected bitmap:", expectedRootBitmapAfterDelete)
 	if expectedRootBitmapAfterDelete != rootBitMapAfterDelete {
 		t.Errorf("actual bitmap does not match expected bitmap: actual(%032b), expected(%032b)\n", rootBitMapAfterDelete, expectedRootBitmapAfterDelete)
