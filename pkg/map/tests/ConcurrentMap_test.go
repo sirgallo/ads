@@ -97,9 +97,6 @@ func TestMapRandomLargeConcurrentOperations(t *testing.T) {
 		insertWG.Add(1)
 		go func (val KeyVal) {
 			defer insertWG.Done()
-			// we'll randomly publish between every 1 to 5 microseconds
-			// randNum := mathRand.Intn(5) + 1
-			//time.Sleep(time.Duration(randNum) * time.Microsecond) // simulate timeout
 			
 			lfMap.Insert(val.Key, val.Value)
 		}(val)

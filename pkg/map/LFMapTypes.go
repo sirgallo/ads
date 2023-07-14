@@ -3,11 +3,9 @@ package lfmap
 import "unsafe"
 
 import "github.com/sirgallo/ads/pkg/counter"
-import "github.com/sirgallo/ads/pkg/utils"
 
 
 type LFMapOpts struct {
-	ExpBackoffOpts utils.ExpBackoffOpts
 	PoolSize int
 }
 
@@ -29,7 +27,6 @@ type LFMap [T comparable] struct {
 	TotalLevels int
 	NodePool *LFMapNodePool[T]
 	Root unsafe.Pointer
-	expBackoffOpts utils.ExpBackoffOpts
 }
 
 type KeyHashState struct {

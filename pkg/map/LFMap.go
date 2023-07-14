@@ -46,7 +46,7 @@ func (lfMap *LFMap[T]) NewInternalNode() *LFMapNode[T] {
 }
 
 func (lfMap *LFMap[T]) CopyNode(node *LFMapNode[T]) *LFMapNode[T] {
-	nodeCopy:= lfMap.NodePool.GetLFMapNode()
+	nodeCopy := lfMap.NodePool.GetLFMapNode()
 	
 	nodeCopy.Key = node.Key
 	nodeCopy.Value = node.Value
