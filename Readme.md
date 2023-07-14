@@ -1,21 +1,17 @@
 # Atomic Data Structures
 
-
 A collection of atomic data structures meant to be used in concurrent environments. These aim to be thread safe and non blocking, utilizing atomic operations like Compare-and-Swap to update the following data structures.
 
 
 ## Installation
 
-
-Import this repository to utilize different atomic datastructures, implemented in `Go`.
-
-in your `Go` project main directory (where the `go.mod` file is located)
+In your `Go` project main directory (where the `go.mod` file is located)
 ```bash
 go get github.com/sirgallo/ads
 go mod tidy
 ```
 
-make sure to run go mod tidy to install dependencies
+Make sure to run go mod tidy to install dependencies.
 
 
 ## Data Structures
