@@ -27,7 +27,7 @@ This Ctrie has a hybrid approach to cleaning up nodes, where it utilizes both `G
 
 ### Hash Exhaustion
 
-Since the 32 bit hash only has 6 chunks of 5 bits, the Ctrie is capped at 6 levels (or around 1000000000 key val pairs), which is not optimal for a trie data strucutre. To circumvent this, we can re-seed our hash after every 6 levels, using [Murmur32](Murmur32.md) as our hash function. To achieve this, we utilize the following functions:
+Since the 32 bit hash only has 6 chunks of 5 bits, the Ctrie is capped at 6 levels (or around 1 billion key val pairs), which is not optimal for a trie data strucutre. To circumvent this, we can re-seed our hash after every 6 levels, using [Murmur32](Murmur32.md) as our hash function. To achieve this, we utilize the following functions:
 
 ```go
 func (lfMap *LFMap[T]) CalculateHashForCurrentLevel(key string, level int) uint32 {
