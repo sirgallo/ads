@@ -108,7 +108,7 @@ func main() {
 
 to test:
 ```bash
-go test -v ./pkg/queue/tests
+go test -v ./pkg/stack/tests
 ```
 
 
