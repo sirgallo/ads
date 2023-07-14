@@ -15,7 +15,8 @@ type KeyVal struct {
 
 
 func TestMapConcurrentOperations(t *testing.T) {
-	lfMap := lfmap.NewLFMap[string]()
+	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
+	lfMap := lfmap.NewLFMap[string](opts)
 
 	keyValPairs := make([]KeyVal, 10000)
 	for idx := range keyValPairs {
@@ -36,7 +37,7 @@ func TestMapConcurrentOperations(t *testing.T) {
 
 	insertWG.Wait()
 
-	lfMap.PrintChildren()
+	// lfMap.PrintChildren()
 
 	var retrieveWG sync.WaitGroup
 
@@ -46,7 +47,7 @@ func TestMapConcurrentOperations(t *testing.T) {
 			defer retrieveWG.Done()
 
 			value := lfMap.Retrieve(val.Key)
-			t.Logf("actual: %s, expected: %s", value, val.Value)
+			// t.Logf("actual: %s, expected: %s", value, val.Value)
 			if value != val.Value {
 				t.Errorf("actual value not equal to expected: actual(%s), expected(%s)", value, val.Value)
 			}

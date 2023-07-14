@@ -60,7 +60,6 @@ func ShrinkTable[T comparable](orig []*LFMapNode[T], bitMap uint32, pos int) []*
 	return newTable
 }
 
-
 // for debugging
 
 func (lfMap *LFMap[T]) PrintChildren() {
@@ -68,16 +67,12 @@ func (lfMap *LFMap[T]) PrintChildren() {
 }
 
 func (lfMap *LFMap[T]) printChildrenRecursive(node *unsafe.Pointer, level int) {
-	// currNode := node.Load().(*LFMapNode[T])
 	currNode := (*LFMapNode[T])(atomic.LoadPointer(node))
 	if currNode == nil { return }
-	// fmt.Println("currNode:", currNode)
 	for i, child := range currNode.Children {
 		if child != nil {
 			fmt.Printf("Level: %d, Index: %d, Key: %s, Value: %v\n", level, i, child.Key, child.Value)
 			
-			// atomicChild := atomic.Value{}
-			// atomicChild.Store(child)
 			childPtr := unsafe.Pointer(child)
 			lfMap.printChildrenRecursive(&childPtr, level+1)
 		}

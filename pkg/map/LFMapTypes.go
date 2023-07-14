@@ -1,6 +1,5 @@
 package lfmap
 
-// import "sync/atomic"
 import "unsafe"
 
 import "github.com/sirgallo/ads/pkg/counter"
@@ -24,7 +23,14 @@ type LFMapNodePool [T comparable] struct {
 }
 
 type LFMap [T comparable] struct {
-	Root unsafe.Pointer
 	BitChunkSize int
+	TotalLevels int
 	NodePool *LFMapNodePool[T]
+	Root unsafe.Pointer
+}
+
+type KeyHashState struct {
+	Key string
+	Hash uint32
+	Level int
 }
