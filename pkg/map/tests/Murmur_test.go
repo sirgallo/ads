@@ -21,8 +21,7 @@ func TestMurmur32ReSeed(t *testing.T) {
 	totalLevels := 6
 	chunkSize := 5
 
-	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
-	lfMap := lfmap.NewLFMap[string, uint32](opts)
+	lfMap := lfmap.NewLFMap[string, uint32]()
 
 	for idx := range levels {
 		hash := lfMap.CalculateHashForCurrentLevel(key, idx)
@@ -48,8 +47,7 @@ func TestMurmur64ReSeed(t *testing.T) {
 	totalLevels := 10
 	chunkSize := 6
 
-	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
-	lfMap := lfmap.NewLFMap[string, uint64](opts)
+	lfMap := lfmap.NewLFMap[string, uint64]()
 
 	for idx := range levels {
 		hash := lfMap.CalculateHashForCurrentLevel(key, idx)

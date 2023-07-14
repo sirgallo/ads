@@ -9,9 +9,9 @@ import "github.com/sirgallo/ads/pkg/utils"
 func TestStackOperation(t *testing.T) {
 	maxRetries := 10
   sExpBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 10 }
-  sOpts := stack.LFStackOpts{ MaxStackSize: 10000, ExpBackoffOpts: sExpBackoffOpts }
+  sOpts := lfstack.LFStackOpts{ MaxStackSize: 10000, ExpBackoffOpts: sExpBackoffOpts }
 	
-  lfStack := stack.NewLFStack[string](sOpts)
+  lfStack := lfstack.NewLFStack[string](sOpts)
 
 	pushVals := []string{"hi", "random", "hello!", "new"}
 	popVals := []string{"new", "hello!", "random", "hi"}

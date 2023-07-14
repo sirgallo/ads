@@ -14,9 +14,9 @@ import "github.com/sirgallo/ads/pkg/utils"
 func TestPubSub(t *testing.T) {
 	maxRetries := 10
   expBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 1 }
-  qOpts := queue.LFQueueOpts{ MaxPoolSize: 10000, ExpBackoffOpts: expBackoffOpts }
+  qOpts := lfqueue.LFQueueOpts{ MaxPoolSize: 10000, ExpBackoffOpts: expBackoffOpts }
 
-	q := queue.NewLFQueue[queue.QueueEntry[string]](qOpts)
+	q := lfqueue.NewLFQueue[lfqueue.QueueEntry[string]](qOpts)
 
 	var publisherWG sync.WaitGroup
 		
@@ -26,8 +26,8 @@ func TestPubSub(t *testing.T) {
 		go func () bool {
 			defer publisherWG.Done()
 			
-			pOpts := queue.PublisherOpts[string]{ LFQueue: q }
-			publisher := queue.NewPublisher(pOpts)
+			pOpts := lfqueue.PublisherOpts[string]{ LFQueue: q }
+			publisher := lfqueue.NewPublisher(pOpts)
 			messageNumber := 1000
 
 			for range make([]int, messageNumber) {
@@ -55,7 +55,7 @@ func TestPubSub(t *testing.T) {
 
 	terminateSubscriber := make(chan bool, 1)
 
-	dequeueHandler := func (subscriberId uuid.UUID, dequeued queue.QueueEntry[string]) bool{
+	dequeueHandler := func (subscriberId uuid.UUID, dequeued lfqueue.QueueEntry[string]) bool{
 		// deqMessage := fmt.Sprintf("Dequeued: %s on subscriber %s", dequeued, subscriberId.String())
 		// fmt.Println(deqMessage)
 
@@ -68,14 +68,14 @@ func TestPubSub(t *testing.T) {
 
 	for range make([]int, 10) {
 		go func () {
-				sOpts := queue.SubscriberOpts[string]{ 
+				sOpts := lfqueue.SubscriberOpts[string]{ 
 				LFQueue: q, 
 				DequeueHandler: dequeueHandler, 
 				StackSize: 100, 
 				TerminationSignal: terminateSubscriber,
 			}
 
-			subscriber := queue.NewSubscriber(sOpts)
+			subscriber := lfqueue.NewSubscriber(sOpts)
 			_, err := subscriber.Subscribe()
 			if err != nil { fmt.Println(err) }
 		}()

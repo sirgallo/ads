@@ -17,8 +17,7 @@ type KeyVal struct {
 //=================================== 32 bit
 
 func TestMapRandomSmallConcurrentOperations32(t *testing.T) {
-	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
-	lfMap := lfmap.NewLFMap[string, uint32](opts)
+	lfMap := lfmap.NewLFMap[string, uint32]()
 
 	inputSize := 100000
 	keyValPairs := make([]KeyVal, inputSize)
@@ -43,7 +42,6 @@ func TestMapRandomSmallConcurrentOperations32(t *testing.T) {
 	}
 
 	insertWG.Wait()
-	t.Log("total objects in node pool:", lfMap.NodePool.PoolSize.GetValue())
 
 	t.Log("retrieving values -->")
 	var retrieveWG sync.WaitGroup
@@ -67,8 +65,7 @@ func TestMapRandomSmallConcurrentOperations32(t *testing.T) {
 }
 
 func TestMapRandomLargeConcurrentOperations32(t *testing.T) {
-	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
-	lfMap := lfmap.NewLFMap[string, uint32](opts)
+	lfMap := lfmap.NewLFMap[string, uint32]()
 
 	inputSize := 10000000
 
@@ -110,7 +107,6 @@ func TestMapRandomLargeConcurrentOperations32(t *testing.T) {
 	}
 
 	insertWG.Wait()
-	t.Log("total objects in node pool:", lfMap.NodePool.PoolSize.GetValue())
 
 	t.Log("retrieving values -->")
 	var retrieveWG sync.WaitGroup
@@ -137,8 +133,7 @@ func TestMapRandomLargeConcurrentOperations32(t *testing.T) {
 //=================================== 64 bit
 
 func TestMapRandomSmallConcurrentOperations64(t *testing.T) {
-	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
-	lfMap := lfmap.NewLFMap[string, uint64](opts)
+	lfMap := lfmap.NewLFMap[string, uint64]()
 
 	inputSize := 100000
 	keyValPairs := make([]KeyVal, inputSize)
@@ -163,7 +158,6 @@ func TestMapRandomSmallConcurrentOperations64(t *testing.T) {
 	}
 
 	insertWG.Wait()
-	t.Log("total objects in node pool:", lfMap.NodePool.PoolSize.GetValue())
 
 	t.Log("retrieving values -->")
 	var retrieveWG sync.WaitGroup
@@ -187,8 +181,7 @@ func TestMapRandomSmallConcurrentOperations64(t *testing.T) {
 }
 
 func TestMapRandomLargeConcurrentOperations64(t *testing.T) {
-	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
-	lfMap := lfmap.NewLFMap[string, uint64](opts)
+	lfMap := lfmap.NewLFMap[string, uint64]()
 
 	inputSize := 10000000
 
@@ -230,7 +223,6 @@ func TestMapRandomLargeConcurrentOperations64(t *testing.T) {
 	}
 
 	insertWG.Wait()
-	t.Log("total objects in node pool:", lfMap.NodePool.PoolSize.GetValue())
 
 	t.Log("retrieving values -->")
 	var retrieveWG sync.WaitGroup

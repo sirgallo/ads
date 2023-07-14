@@ -1,4 +1,4 @@
-package queue
+package lfqueue
 
 import "time"
 import "unsafe"
@@ -49,7 +49,7 @@ type SubscriberOpts [T comparable] struct {
 type Subscriber [T comparable] struct {
 	subscriberId uuid.UUID
 	lfQueue *LFQueue[QueueEntry[T]]
-	lfStack *stack.LFStack[QueueEntry[T]]
+	lfStack *lfstack.LFStack[QueueEntry[T]]
 	dequeueHandler func(subscriberId uuid.UUID, dequeued QueueEntry[T]) bool
 	terminationSignal chan bool
 }

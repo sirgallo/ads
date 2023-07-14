@@ -1,4 +1,4 @@
-package stack
+package lfstack
 
 import "errors"
 import "sync/atomic"

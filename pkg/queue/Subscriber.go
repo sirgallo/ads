@@ -1,4 +1,4 @@
-package queue
+package lfqueue
 
 import "github.com/google/uuid"
 
@@ -11,8 +11,8 @@ func NewSubscriber[T comparable](opts SubscriberOpts[T]) *Subscriber[T] {
 
 	maxRetries := 10
 	sExpBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 10 }
-	sOpts := stack.LFStackOpts{ MaxStackSize: opts.StackSize, ExpBackoffOpts: sExpBackoffOpts }
-	lfStack := stack.NewLFStack[QueueEntry[T]](sOpts)
+	sOpts := lfstack.LFStackOpts{ MaxStackSize: opts.StackSize, ExpBackoffOpts: sExpBackoffOpts }
+	lfStack := lfstack.NewLFStack[QueueEntry[T]](sOpts)
 
 	return &Subscriber[T] {
 		subscriberId: subscriberId,

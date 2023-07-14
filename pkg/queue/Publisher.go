@@ -1,4 +1,4 @@
-package queue 
+package lfqueue 
 
 import "time"
 import "github.com/google/uuid"

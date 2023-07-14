@@ -9,9 +9,9 @@ import "github.com/sirgallo/ads/pkg/utils"
 func TestQueueOperations(t *testing.T) {
 	maxRetries := 10
   expBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 1 }
-  qOpts := queue.LFQueueOpts{ MaxPoolSize: 10000, ExpBackoffOpts: expBackoffOpts }
+  qOpts := lfqueue.LFQueueOpts{ MaxPoolSize: 10000, ExpBackoffOpts: expBackoffOpts }
 
-	q := queue.NewLFQueue[string](qOpts)
+	q := lfqueue.NewLFQueue[string](qOpts)
 
 	enqueueVals := []string{"hi", "random", "hello!", "new"}
 	
@@ -47,9 +47,9 @@ func TestQueueOperations(t *testing.T) {
 func TestClear(t *testing.T) {
 	maxRetries := 10
   expBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 1 }
-  qOpts := queue.LFQueueOpts{ MaxPoolSize: 10000, ExpBackoffOpts: expBackoffOpts }
+  qOpts := lfqueue.LFQueueOpts{ MaxPoolSize: 10000, ExpBackoffOpts: expBackoffOpts }
 
-	q := queue.NewLFQueue[string](qOpts)
+	q := lfqueue.NewLFQueue[string](qOpts)
 
 	enqueueVals := []string{"hi", "random", "hello!", "new"}
 	

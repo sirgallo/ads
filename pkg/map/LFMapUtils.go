@@ -1,9 +1,9 @@
 package lfmap
 
-import "sync/atomic"
 import "fmt"
 import "math/bits"
 import "math"
+import "sync/atomic"
 import "unsafe"
 
 

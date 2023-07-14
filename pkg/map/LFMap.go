@@ -7,7 +7,7 @@ import "unsafe"
 import "github.com/sirgallo/ads/pkg/utils"
 
 
-func NewLFMap[T comparable, V uint32 | uint64](opts LFMapOpts) *LFMap[T, V] {
+func NewLFMap[T comparable, V uint32 | uint64]() *LFMap[T, V] {
 	var v V
 	var bitChunkSize int
 	
@@ -20,49 +20,43 @@ func NewLFMap[T comparable, V uint32 | uint64](opts LFMapOpts) *LFMap[T, V] {
 
 	hashChunks := int(math.Pow(float64(2), float64(bitChunkSize))) / bitChunkSize
 	
-	nodePool := NewLFMapNodePool[T, V](opts.PoolSize)
-	rootNode := nodePool.GetLFMapNode()
-	
-	rootNode.IsLeafNode = false
-	rootNode.BitMap = 0
-	rootNode.Children = []*LFMapNode[T, V]{}
+	rootNode := &LFMapNode[T, V]{
+		IsLeafNode: false,
+		BitMap: 0,
+		Children: []*LFMapNode[T, V]{},
+	}
 
 	return &LFMap[T, V]{
 		BitChunkSize: bitChunkSize,
 		HashChunks: hashChunks,
 		Root: unsafe.Pointer(rootNode),
-		NodePool: nodePool,
 	}
 }
 
 func (lfMap *LFMap[T, V]) NewLeafNode(key string, value T) *LFMapNode[T, V] {
-	leafNode := lfMap.NodePool.GetLFMapNode()
-	
-	leafNode.Key = key
-	leafNode.Value = value
-	leafNode.IsLeafNode = true
-
-	return leafNode
+	return &LFMapNode[T, V]{
+		Key: key,
+		Value: value,
+		IsLeafNode: true,
+	}
 }
 
 func (lfMap *LFMap[T, V]) NewInternalNode() *LFMapNode[T, V] {
-	iNode := lfMap.NodePool.GetLFMapNode()
-
-	iNode.IsLeafNode = false
-	iNode.BitMap = 0
-	iNode.Children = []*LFMapNode[T, V]{}
-
-	return iNode
+	return &LFMapNode[T, V]{
+		IsLeafNode: false,
+		BitMap: 0,
+		Children: []*LFMapNode[T, V]{},
+	}
 }
 
 func (lfMap *LFMap[T, V]) CopyNode(node *LFMapNode[T, V]) *LFMapNode[T, V] {
-	nodeCopy := lfMap.NodePool.GetLFMapNode()
-	
-	nodeCopy.Key = node.Key
-	nodeCopy.Value = node.Value
-	nodeCopy.IsLeafNode = node.IsLeafNode
-	nodeCopy.BitMap = node.BitMap
-	nodeCopy.Children = make([]*LFMapNode[T, V], len(node.Children))
+	nodeCopy := &LFMapNode[T, V]{
+		Key: node.Key,
+		Value: node.Value,
+		IsLeafNode: node.IsLeafNode,
+		BitMap: node.BitMap,
+		Children: make([]*LFMapNode[T, V], len(node.Children)),
+	}
 
 	copy(nodeCopy.Children, node.Children)
 
@@ -190,10 +184,6 @@ func (lfMap *LFMap[T, V]) deleteRecursive(node *unsafe.Pointer, key string, leve
 
 func (lfMap *LFMap[T, V]) compareAndSwap(node *unsafe.Pointer, currNode *LFMapNode[T, V], nodeCopy *LFMapNode[T, V]) bool {
 	if atomic.CompareAndSwapPointer(node, unsafe.Pointer(currNode), unsafe.Pointer(nodeCopy)) {
-		if currNode.IsLeafNode { lfMap.NodePool.PutLFMapNode(currNode) }
 		return true
-	} else { 
-		if nodeCopy.IsLeafNode { lfMap.NodePool.PutLFMapNode(nodeCopy) }
-		return false 
-	}
+	} else { return false }
 }

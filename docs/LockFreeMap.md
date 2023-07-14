@@ -13,12 +13,10 @@ Both the `32 bit` and `64 bit` variants have been implemented, with instantiatio
 
 ```go
 // 32 bit
-opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
-lfMap := lfmap.NewLFMap[T, uint32](opts)
+lfMap := lfmap.NewLFMap[T, uint32]()
 
 // 64 bit
-opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
-lfMap := lfmap.NewLFMap[T, uint64](opts)
+lfMap := lfmap.NewLFMap[T, uint64]()
 ```
 
 
@@ -30,11 +28,6 @@ The design takes the basic algorithm for `HAMT`, and adds in `CAS` to insert/del
 ### Path Copying
 
 This CTrie implements full path copying. As an operation traverses down the path to the key, on inserts/deletes it will make a copy of the current node and modify the copy instead of modifying the node in place. This makes the CTrie [persistent](https://en.wikipedia.org/wiki/Persistent_data_structure). The modified node causes all parent nodes to point to it by cascading the changes up the path back to the root of the trie. This is done by passing a copy of the node being looked at, and then performing compare and swap back up the path. If the compare and swap operation fails, the copy is discarded and the operation retries back at the root.
-
-
-### Object Pool
-
-This Ctrie has a hybrid approach to cleaning up nodes, where it utilizes both `Go's` garbage collection as well as an `Object Pool`. When copies of nodes are created, the compare and swap operation will recycle the failed node if it is a leaf node. So, if the current node is replaced by the new copy, and the current node is a leaf node, it is recycled. Otherwise, the failed replacement of the new copy is recycled. On inserts, if there are available objects in the pool, a new node can be pulled from the pool. This ensures that memory is not being allocated/deallocated all the time, and should have an overall positive effect on performance of the trie.
 
 
 ### Hash Exhaustion

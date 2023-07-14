@@ -28,12 +28,10 @@ func main() {
   // initialize lock free map
 
   // for 32 bit hash and bitmap
-  opts := lfmap.LFMapOpts{ PoolSize: 10000 }
-  lfMap := lfmap.NewLFMap[string, uint32](opts)
+  lfMap := lfmap.NewLFMap[string, uint32]()
 
   // for 64 bit hash and bitmap
-  opts := lfmap.LFMapOpts{ PoolSize: 10000 }
-  lfMap := lfmap.NewLFMap[string, uint64](opts)
+  lfMap := lfmap.NewLFMap[string, uint64]()
 
   // insert key/val pair
   lfMap.Insert("hi", "world")
@@ -65,10 +63,10 @@ func main() {
   // define max queue size and exponential backoff on CAS failure
   maxRetries := 10
   expBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 1 }
-  qOpts := queue.LFQueueOpts{ MaxQueueSize: 10000, ExpBackoffOpts: expBackoffOpts }
+  qOpts := lfqueue.LFQueueOpts{ MaxQueueSize: 10000, ExpBackoffOpts: expBackoffOpts }
 	
   // initialize queue with opts
-  q := queue.NewLFQueue[string](qOpts)
+  q := lfqueue.NewLFQueue[string](qOpts)
 
   // enqueue
   q.Enqueue("hi")
@@ -98,10 +96,10 @@ func main() {
   // define max stack size and exponential backoff on CAS failure
   maxRetries := 10
   sExpBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 10 }
-  sOpts := stack.LFStackOpts{ MaxStackSize: 10000, ExpBackoffOpts: sExpBackoffOpts }
+  sOpts := lfstack.LFStackOpts{ MaxStackSize: 10000, ExpBackoffOpts: sExpBackoffOpts }
 	
   // initialize stack with opts
-  lfStack := stack.NewLFStack[string](sOpts)
+  lfStack := lfstack.NewLFStack[string](sOpts)
 
   // push
   lfStack.Push("hi")

@@ -9,8 +9,7 @@ import "github.com/sirgallo/ads/pkg/map"
 //=================================== 32 bit
 
 func TestMapOperations32(t *testing.T) {
-	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
-	lfMap := lfmap.NewLFMap[string, uint32](opts)
+	lfMap := lfmap.NewLFMap[string, uint32]()
 
 	lfMap.Insert("hello", "world")
 	lfMap.Insert("new", "wow!")
@@ -98,8 +97,7 @@ func TestMapOperations32(t *testing.T) {
 //=================================== 64 bit
 
 func TestMapOperations64(t *testing.T) {
-	opts := lfmap.LFMapOpts{ PoolSize: 10000000 }
-	lfMap := lfmap.NewLFMap[string, uint64](opts)
+	lfMap := lfmap.NewLFMap[string, uint64]()
 
 	lfMap.Insert("hello", "world")
 	lfMap.Insert("new", "wow!")
