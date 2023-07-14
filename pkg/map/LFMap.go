@@ -179,16 +179,10 @@ func (lfMap *LFMap[T]) deleteRecursive(node *unsafe.Pointer, key string, level i
 
 func (lfMap *LFMap[T]) compareAndSwap(node *unsafe.Pointer, currNode *LFMapNode[T], nodeCopy *LFMapNode[T]) bool {
 	if atomic.CompareAndSwapPointer(node, unsafe.Pointer(currNode), unsafe.Pointer(nodeCopy)) {
-		if currNode.IsLeafNode {
-			lfMap.NodePool.PutLFMapNode(currNode)
-		}
-
+		if currNode.IsLeafNode { lfMap.NodePool.PutLFMapNode(currNode) }
 		return true
 	} else { 
-		if nodeCopy.IsLeafNode {
-			lfMap.NodePool.PutLFMapNode(nodeCopy)
-		}
-
+		if nodeCopy.IsLeafNode { lfMap.NodePool.PutLFMapNode(nodeCopy) }
 		return false 
 	}
 }

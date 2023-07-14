@@ -26,6 +26,9 @@ func TestMapRandomSmallConcurrentOperations(t *testing.T) {
 		keyValPairs[idx] = KeyVal{ Key: randomString, Value: randomString }
 	}
 
+	t.Log("seeded keyValPairs array:", inputSize)
+
+	t.Log("inserting values -->")
 	var insertWG sync.WaitGroup
 
 	for _, val := range keyValPairs {
@@ -39,8 +42,7 @@ func TestMapRandomSmallConcurrentOperations(t *testing.T) {
 
 	insertWG.Wait()
 
-	// lfMap.PrintChildren()
-
+	t.Log("retrieving values -->")
 	var retrieveWG sync.WaitGroup
 
 	for _, val := range keyValPairs {
@@ -57,6 +59,8 @@ func TestMapRandomSmallConcurrentOperations(t *testing.T) {
 	}
 
 	retrieveWG.Wait()
+
+	t.Log("done")
 }
 
 func TestMapRandomLargeConcurrentOperations(t *testing.T) {
@@ -103,8 +107,6 @@ func TestMapRandomLargeConcurrentOperations(t *testing.T) {
 	}
 
 	insertWG.Wait()
-
-	// lfMap.PrintChildren()
 
 	t.Log("retrieving values -->")
 	var retrieveWG sync.WaitGroup
