@@ -1,6 +1,7 @@
 package node
 
 import "github.com/sirgallo/ads/pkg/counter"
+import "github.com/sirgallo/ads/pkg/utils"
 
 
 func NewLFNodePool[T comparable](poolSize int) *LFNodePool[T] {
@@ -24,6 +25,10 @@ func (np *LFNodePool[T]) GetLFNode() *LFNode[T] {
 }
 
 func (np *LFNodePool[T]) PutLFNode(node *LFNode[T]) {
+	node.Value = utils.GetZero[T]()
+	node.Next = nil
+	node.Tag = utils.GetZero[uintptr]()
+
 	select {
 		case np.Pool <- node:
 			np.PoolSize.Increment(1)

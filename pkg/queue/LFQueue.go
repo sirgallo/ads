@@ -77,7 +77,7 @@ func (queue *LFQueue[T]) Dequeue() (T, error) {
 
 		if head == atomic.LoadPointer(&queue.head) && tag == atomic.LoadUintptr(&(*node.LFNode[T])(head).Tag) {
 			if head == tail { 
-				if head == nil { return utils.GetZero[T](), nil }
+				if (*node.LFNode[T])(head).Value == utils.GetZero[T]() { return utils.GetZero[T](), nil }
 				atomic.CompareAndSwapPointer(&queue.tail, tail, next)
 			} else {
 				if next != nil {

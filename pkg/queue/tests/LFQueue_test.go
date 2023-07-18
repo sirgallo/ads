@@ -66,3 +66,22 @@ func TestClear(t *testing.T) {
 		t.Errorf("actual queue size does not match expected: actual(%d), expected(%d)", actualSize, expectedSize)
 	}
 }
+
+func TestEmpty(t *testing.T) {
+	maxRetries := 10
+  expBackoffOpts := utils.ExpBackoffOpts{ MaxRetries: &maxRetries, TimeoutInMicroseconds: 1 }
+  qOpts := lfqueue.LFQueueOpts{ MaxPoolSize: 10000, ExpBackoffOpts: expBackoffOpts }
+
+	q := lfqueue.NewLFQueue[string](qOpts)
+
+	nilVal := utils.GetZero[string]()
+	val, err := q.Dequeue()
+
+	if err != nil {
+		t.Error("error dequeuing element from queue")
+	}
+
+	if val != nilVal {
+		t.Error("value is not equal to null value")
+	}
+}
