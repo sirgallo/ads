@@ -8,9 +8,9 @@ import "github.com/sirgallo/ads/pkg/utils"
 
 
 func NewLFMap[T comparable, V uint32 | uint64]() *LFMap[T, V] {
-	var v V
 	var bitChunkSize int
-	
+
+	var v V
 	switch any(v).(type) {
 		case uint32: 
 			bitChunkSize = 5
