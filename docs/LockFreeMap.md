@@ -23,17 +23,17 @@ lfMap := lfmap.NewLFMap[T, uint64]()
 The design takes the basic algorithm for `HAMT`, and adds in `CAS` to insert/delete new values. A thread will modify an element at the point in time it loads it, and if the compare and swap operation fails, the update is discarded and the operation will start back at the root of the trie and traverse the path through to reattempt to add/delete the element.
 
 
+## Background
+
+Purely out of curiousity, I stumbled across the idea of `Hash Array Mapped Tries` in my search to create my own implementations of thread safe data structures in `Go` utilizing non-blocking operations, specifically, atomic operations like [Compare-and-Swap](https://en.wikipedia.org/wiki/Compare-and-swap). Selecting a data structure for maps was a challenge until I stumbled up the [CTrie](https://en.wikipedia.org/wiki/Ctrie), which is a thread safe, non-blocking implementation of a HAMT. This implementation aims to be clear and readable, since there does not seem to be a lot of documentation regarding this data structure beyond the original whitepaper, written by Phil Bagwell in 2000 [1](https://lampwww.epfl.ch/papers/idealhashtrees.pdf).
+
+
 ## Hash Array Mapped Trie
-
-
-### Background
-
-Purely out of curiousity, I stumbled across the idea of `Hash Array Mapped Tries` in my search to create my own implementations of thread safe data structures in `Go` utilizing non-blocking operations, specifically, atomic operations like [Compare-and-Swap](https://en.wikipedia.org/wiki/Compare-and-swap). Selecting a data structure for maps was a challenge until I stumbled up the [CTrie](https://en.wikipedia.org/wiki/Ctrie), which is a thread safe, non-blocking implementation of a HAMT. Before implementing my own concurrent trie, I wanted to understand the fundamentals of HAMTs and how to implement them myself. This implementation doesn't aim to be the most optimized, but it does aim to be clear and readable, since there does not seem to be a lot of documentation regarding this data structure beyond the original whitepaper, written by Phil Bagwell in 2000 [1](https://lampwww.epfl.ch/papers/idealhashtrees.pdf).
 
 
 ### Overview
 
-A `Hash Array Mapped Trie` is a memory efficient data structure that can be used to implement maps (associative arrays) and sets. HAMTs, when implemented with path copying and garbage collection, become persistent as well, which means that any function that utilizes them becomes pure.
+A `Hash Array Mapped Trie` is a memory efficient data structure that can be used to implement maps (associative arrays) and sets. HAMTs, when implemented with path copying and garbage collection, become persistent as well, which means that any function that utilizes them becomes pure (essentially, the data structure becomes immutable).
 
 
 #### Why use a HAMT?
@@ -81,7 +81,7 @@ Time Complexity for operations Search, Insert, and Delete on an order 32 HAMT is
 
 #### Hashing
 
-Keys in the trie are first hashed before an operation occurs on them, using the (Murmur)[./Murmur] non-cryptographic hash function, which has also been implemented within the package. This creates a uint32 or uint64 value which is then used to index the key within the trie structure.
+Keys in the trie are first hashed before an operation occurs on them, using the [Murmur](./Murmur.md) non-cryptographic hash function, which has also been implemented within the package. This creates a uint32 or uint64 value which is then used to index the key within the trie structure.
 
 
 #### Array Mapping
